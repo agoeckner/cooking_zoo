@@ -130,6 +130,7 @@ class CookingEnvironment(AECEnv):
         self.termination_info = ""
 
         # Load world & distances.
+        self.world = CookingWorld(self.action_scheme_class)
         self.world.load_level(level=self.level, num_agents=self.num_agents)
 
         for recipe in self.recipe_graphs:
