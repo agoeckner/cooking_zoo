@@ -1,0 +1,18 @@
+{
+  "LEVEL_LAYOUT": "---------\n-       -\n-       -\n-   -   -\n-   -   -\n-   -   -\n-       -\n-       -\n---------",
+  "STATIC_OBJECTS": [{"Cutboard": {"COUNT": 1, "X_POSITION": [8], "Y_POSITION":  [7]}},
+                     {"Cutboard": {"COUNT": 1, "X_POSITION": [0], "Y_POSITION":  [1]}},
+                     {"Deliversquare": {"COUNT": 2, "X_POSITION": [4], "Y_POSITION":  [0,8]}}],
+  "DYNAMIC_OBJECTS": [{"Plate":  {"COUNT": 1, "X_POSITION": [4], "Y_POSITION":  [3]}},
+                      {"Plate": {"COUNT": 1, "X_POSITION": [4], "Y_POSITION":  [5]}},
+                      {"Lettuce": {"COUNT": 1, "X_POSITION": [8], "Y_POSITION":  [1]}},
+                      {"Tomato": {"COUNT": 1, "X_POSITION": [2], "Y_POSITION":  [8]}},
+                      {"Onion": {"COUNT": 1, "X_POSITION": [6], "Y_POSITION":  [8]}},
+                      {"Carrot": {"COUNT": 1, "X_POSITION": [0], "Y_POSITION":  [3]}},
+                      {"Cucumber": {"COUNT": 1, "X_POSITION": [8], "Y_POSITION":  [3]}},
+                      {"Banana": {"COUNT": 1, "X_POSITION": [0], "Y_POSITION":  [5]}},
+                      {"Apple": {"COUNT": 1, "X_POSITION": [8], "Y_POSITION":  [5]}},
+                      {"Watermelon": {"COUNT": 1, "X_POSITION": [0], "Y_POSITION":  [7]}}
+  ],
+  "AGENTS": [{"MAX_COUNT": 4, "X_POSITION": [1 ,2, 3, 4, 5, 6, 7], "Y_POSITION":  [1 ,2, 3, 4, 5, 6, 7]}]
+}
