@@ -67,7 +67,7 @@ class Game:
                 store_action_dict = {}
                 action = self.key_to_action[event.key]
                 self.env.unwrapped.world.agents[0].action = action
-                store_action_dict[self.env.unwrapped.world.agents[0]] = action
+                store_action_dict[self.env.agents[0]] = action
                 self.store["observation"].append(self.last_obs)
                 self.store["agent_states"].append([agent.location for agent in self.env.unwrapped.world.agents])
                 for idx, agent in enumerate(self.env.unwrapped.world.agents):
@@ -76,7 +76,7 @@ class Game:
                         env_agent = self.env.unwrapped.world_agent_to_env_agent_mapping[agent]
                         last_obs_raw = self.last_obs[env_agent]
                         ai_action = ai_policy.get_action(last_obs_raw)
-                        store_action_dict[agent] = ai_action
+                        store_action_dict[env_agent] = ai_action
                         self.env.unwrapped.world.agents[idx].action = ai_action
 
                 self.yielding_action_dict = {agent: self.env.unwrapped.world_agent_mapping[agent].action
@@ -108,7 +108,7 @@ class Game:
                 env_agent = self.env.unwrapped.world_agent_to_env_agent_mapping[agent]
                 last_obs_raw = self.last_obs[env_agent]
                 ai_action = ai_policy.get_action(last_obs_raw)
-                store_action_dict[agent] = ai_action
+                store_action_dict[env_agent] = ai_action
                 self.env.unwrapped.world.agents[idx].action = ai_action
 
         self.yielding_action_dict = {agent: self.env.unwrapped.world_agent_mapping[agent].action

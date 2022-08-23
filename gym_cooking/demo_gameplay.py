@@ -11,7 +11,7 @@ level = 'open_room_interaction2'
 seed = 1
 record = False
 max_num_timesteps = 1000
-recipes = ["TomatoSalad"]
+recipes = ["TomatoLettuceSalad"]
 
 parallel_env = cooking_zoo.parallel_env(level=level, num_agents=n_agents, record=record,
                                         max_steps=max_num_timesteps, recipes=recipes, action_scheme="scheme3")
