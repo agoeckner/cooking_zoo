@@ -4,7 +4,7 @@ import copy
 from gym_cooking.cooking_world.cooking_world import CookingWorld
 from gym_cooking.cooking_world.world_objects import *
 from gym_cooking.cooking_world.actions import *
-from gym_cooking.cooking_book.recipe_drawer import RECIPES, NUM_GOALS
+from gym_cooking.cooking_book.recipe_drawer2 import RECIPES, NUM_GOALS
 
 import numpy as np
 from collections import namedtuple, defaultdict
@@ -238,10 +238,14 @@ class CookingEnvironment(AECEnv):
             open_goals[idx] = recipe.goals_completed(NUM_GOALS)
             bonus = recipe.completed() * 0.1
             rewards[idx] = (sum(goals_before) - sum(open_goals[idx]) + bonus) * 5
+            try:
+                rewards[idx] -= sum([5 * (num - 1) for num in recipe.group_marked])
+            except AttributeError:
+                pass
 
             rewards[idx] -= (5 / self.max_steps)
 
-            objects_to_seek = recipe.get_objects_to_seek()
+            # objects_to_seek = recipe.get_objects_to_seek()
             # if objects_to_seek:
             #     distances = []
             #     for cls in objects_to_seek:

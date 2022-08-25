@@ -83,6 +83,8 @@ class Game:
                                              for agent in self.env.agents}
                 observations, rewards, dones, infos = self.env.step(self.yielding_action_dict)
 
+                print(rewards)
+
                 self.store["actions"].append(store_action_dict)
                 self.store["info"].append(infos)
                 self.store["rewards"].append(rewards)

@@ -20,7 +20,7 @@ class RecipeNode:
         self.contains = contains or []
         self.world_objects = []
         self.name = name
-        self.objects_to_seek = objects_to_seek or []
+        self.child_nodes = objects_to_seek or []
 
     def is_leaf(self):
         return not bool(self.contains)
@@ -42,7 +42,7 @@ class Recipe:
     def get_objects_to_seek(self):
         objects_to_seek = set()
         for node in self.node_list:
-            if node.achieved or not all((contains.achieved for contains in node.contains)):
+            if node.achieved or not all((contains.marked for contains in node.contains)):
                 continue
             objects_to_seek.update(node.objects_to_seek)
         return objects_to_seek
@@ -52,15 +52,15 @@ class Recipe:
 
     def update_recipe_state(self, world: CookingWorld):
         for node in reversed(self.node_list):
-            node.achieved = False
+            node.marked = False
             node.world_objects = []
-            if not all((contains.achieved for contains in node.contains)):
+            if not all((contains.marked for contains in node.contains)):
                 continue
             for obj in world.world_objects[node.name]:
                 # check for all conditions
                 if self.check_conditions(node, obj):
                     node.world_objects.append(obj)
-                    node.achieved = True
+                    node.marked = True
 
     def expand_child_nodes(self, node: RecipeNode):
         child_nodes = []
