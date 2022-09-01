@@ -4,7 +4,7 @@ import copy
 from gym_cooking.cooking_world.cooking_world import CookingWorld
 from gym_cooking.cooking_world.world_objects import *
 from gym_cooking.cooking_world.actions import *
-from gym_cooking.cooking_book.recipe_drawer2 import RECIPES, NUM_GOALS
+from gym_cooking.cooking_book.recipe_drawer import RECIPES, NUM_GOALS
 
 import numpy as np
 from collections import namedtuple, defaultdict

@@ -13,7 +13,7 @@ class RecipeNode:
 
     def __init__(self, root_type, id_num, name, parent=None, conditions=None, contains=None, objects_to_seek=None):
         self.parent = parent
-        self.achieved = False
+        self.marked = False
         self.id_num = id_num
         self.root_type = root_type
         self.conditions = conditions or []
@@ -36,19 +36,19 @@ class Recipe:
     def goals_completed(self, num_goals):
         goals = np.zeros(num_goals, dtype=np.int32)
         for node in self.node_list:
-            goals[node.id_num] = int(not node.achieved)
+            goals[node.id_num] = int(not node.marked)
         return goals
 
     def get_objects_to_seek(self):
         objects_to_seek = set()
         for node in self.node_list:
-            if node.achieved or not all((contains.marked for contains in node.contains)):
+            if node.marked or not all((contains.marked for contains in node.contains)):
                 continue
             objects_to_seek.update(node.objects_to_seek)
         return objects_to_seek
 
     def completed(self):
-        return self.root_node.achieved
+        return self.root_node.marked
 
     def update_recipe_state(self, world: CookingWorld):
         for node in reversed(self.node_list):
