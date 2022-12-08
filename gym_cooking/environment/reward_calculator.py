@@ -35,6 +35,7 @@ class RewardCalculator:
             if not first_obj_list:
                 first_obj_list = world.world_objects[ClassToString[first]]
             sub_fulfilled_list = []
+            all_list = []
             for obj in first_obj_list:
                 obj_fulfilled_list = []
                 attr = getattr(obj, condition[1])
@@ -48,7 +49,7 @@ class RewardCalculator:
                                 all_list.append(False)
                                 break
                         else:
-                            fulfilled =
+                            fulfilled = None
                 else:
                     if isinstance(condition[2], Tuple):
                         if self.check_conditions(world, assigned_object_set + obj, [condition[2]]):
@@ -57,4 +58,5 @@ class RewardCalculator:
                         fulfilled = attr == condition[2]
         return all(fulfilled_list)
 
-    def get_objects_with_cond(self, world, cls, ):
+    def get_objects_with_cond(self, world, cls, cond):
+        pass
