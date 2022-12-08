@@ -24,7 +24,7 @@ FPS = 20
 
 
 def env(level, num_agents, record, max_steps, recipes, obs_spaces=None, action_scheme="scheme1", ghost_agents=0,
-        render=False, manual_control=False):
+        render=False):
     """
     The env function wraps the environment in 3 wrappers by default. These
     wrappers contain logic that is common to many pettingzoo environments.
@@ -33,8 +33,7 @@ def env(level, num_agents, record, max_steps, recipes, obs_spaces=None, action_s
     elsewhere in the developer documentation.
     """
     env_init = CookingEnvironment(level, num_agents, record, max_steps, recipes, obs_spaces,
-                                  action_scheme=action_scheme, ghost_agents=ghost_agents, render=render,
-                                  manual_control=False)
+                                  action_scheme=action_scheme, ghost_agents=ghost_agents, render=render)
     env_init = wrappers.CaptureStdoutWrapper(env_init)
     env_init = wrappers.AssertOutOfBoundsWrapper(env_init)
     env_init = wrappers.OrderEnforcingWrapper(env_init)
@@ -57,9 +56,9 @@ class CookingEnvironment(AECEnv, EzPickle):
     action_scheme_map = {"scheme1": ActionScheme1, "scheme2": ActionScheme2, "scheme3": ActionScheme3}
 
     def __init__(self, level, num_agents, record, max_steps, recipes, obs_spaces=None, allowed_objects=None,
-                 action_scheme="scheme1", ghost_agents=0, render=False, manual_control=False):
+                 action_scheme="scheme1", ghost_agents=0, render=False):
         EzPickle.__init__(self, level, num_agents, record, max_steps, recipes, obs_spaces, allowed_objects,
-                          action_scheme, ghost_agents, render, manual_control)
+                          action_scheme, ghost_agents, render)
         super().__init__()
 
         obs_spaces = obs_spaces or ["numeric"]
