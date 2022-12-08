@@ -42,7 +42,7 @@ class Game:
 
     def on_init(self):
         pygame.init()
-        self.graphics_pipeline.on_init()
+        self.graphics_pipeline.initialize()
         return True
 
     def on_event(self, event):
@@ -170,7 +170,7 @@ class Game:
         return self.store
 
     def on_render(self):
-        self.graphics_pipeline.on_render()
+        self.graphics_pipeline.render()
 
     @staticmethod
     def on_cleanup():

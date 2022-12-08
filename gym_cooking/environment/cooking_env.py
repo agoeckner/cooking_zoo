@@ -12,14 +12,19 @@ from pettingzoo import AECEnv
 from pettingzoo.utils import agent_selector
 from pettingzoo.utils import wrappers
 from pettingzoo.utils.conversions import parallel_wrapper_fn
+from gymnasium.utils import EzPickle, seeding
+from gym_cooking.environment.game.graphic_pipeline import GraphicPipeline
 
-import gym
+import gymnasium as gym
 
 CollisionRepr = namedtuple("CollisionRepr", "time agent_names agent_locations")
 COLORS = ['blue', 'magenta', 'yellow', 'green']
 
+FPS = 20
 
-def env(level, num_agents, record, max_steps, recipes, obs_spaces=None, action_scheme="scheme1", ghost_agents=0):
+
+def env(level, num_agents, record, max_steps, recipes, obs_spaces=None, action_scheme="scheme1", ghost_agents=0,
+        render=False, manual_control=False):
     """
     The env function wraps the environment in 3 wrappers by default. These
     wrappers contain logic that is common to many pettingzoo environments.
@@ -28,7 +33,8 @@ def env(level, num_agents, record, max_steps, recipes, obs_spaces=None, action_s
     elsewhere in the developer documentation.
     """
     env_init = CookingEnvironment(level, num_agents, record, max_steps, recipes, obs_spaces,
-                                  action_scheme=action_scheme, ghost_agents=ghost_agents)
+                                  action_scheme=action_scheme, ghost_agents=ghost_agents, render=render,
+                                  manual_control=False)
     env_init = wrappers.CaptureStdoutWrapper(env_init)
     env_init = wrappers.AssertOutOfBoundsWrapper(env_init)
     env_init = wrappers.OrderEnforcingWrapper(env_init)
@@ -38,15 +44,22 @@ def env(level, num_agents, record, max_steps, recipes, obs_spaces=None, action_s
 parallel_env = parallel_wrapper_fn(env)
 
 
-class CookingEnvironment(AECEnv):
+class CookingEnvironment(AECEnv, EzPickle):
     """Environment object for Overcooked."""
 
-    metadata = {'render.modes': ['human'], 'name': "cooking_zoo"}
+    metadata = {
+        "render_modes": ["human", "rgb_array"],
+        "name": "cookingzoo_v1",
+        "is_parallelizable": True,
+        "render_fps": FPS,
+    }
 
     action_scheme_map = {"scheme1": ActionScheme1, "scheme2": ActionScheme2, "scheme3": ActionScheme3}
 
     def __init__(self, level, num_agents, record, max_steps, recipes, obs_spaces=None, allowed_objects=None,
-                 action_scheme="scheme1", ghost_agents=0):
+                 action_scheme="scheme1", ghost_agents=0, render=False, manual_control=False):
+        EzPickle.__init__(self, level, num_agents, record, max_steps, recipes, obs_spaces, allowed_objects,
+                          action_scheme, ghost_agents, render, manual_control)
         super().__init__()
 
         obs_spaces = obs_spaces or ["numeric"]
@@ -69,7 +82,9 @@ class CookingEnvironment(AECEnv):
         self.set_filename()
         self.world = CookingWorld(self.action_scheme_class)
         self.recipes = recipes
+        self.graphic_pipeline = None
         self.game = None
+        self.render_flag = render
         self.recipe_graphs = [RECIPES[recipe]() for recipe in recipes]
         self.ghost_agents = ghost_agents
 
@@ -110,11 +125,14 @@ class CookingEnvironment(AECEnv):
         self.done = False
         self.rewards = dict(zip(self.agents, [0 for _ in self.agents]))
         self._cumulative_rewards = dict(zip(self.agents, [0 for _ in self.agents]))
-        self.dones = dict(zip(self.agents, [False for _ in self.agents]))
+        self.terminations = dict(zip(self.agents, [False for _ in self.agents]))
+        self.truncations = dict(zip(self.agents, [False for _ in self.agents]))
         self.infos = dict(zip(self.agents, [{} for _ in self.agents]))
         self.accumulated_actions = []
         self.current_tensor_observation = np.zeros((self.world.width, self.world.height,
                                                     self.graph_representation_length))
+        self.render_mode = "human"
+        self.np_random = None
 
     def set_filename(self):
         self.filename = f"{self.level}_agents{self.num_agents}"
@@ -122,7 +140,16 @@ class CookingEnvironment(AECEnv):
     def state(self):
         pass
 
-    def reset(self):
+    def observation_space(self, agent):
+        return self.observation_spaces[agent]
+
+    def action_space(self, agent):
+        return self.action_spaces[agent]
+
+    def seed(self, seed=None):
+        self.np_random, seed = seeding.np_random(seed)
+
+    def reset(self, seed=None, return_info=False, options=None):
         # self.world = CookingWorld(self.action_scheme_class)
         self.t = 0
 
@@ -160,7 +187,8 @@ class CookingEnvironment(AECEnv):
         self.current_tensor_observation = self.get_tensor_representation()
         self.rewards = dict(zip(self.agents, [0 for _ in self.agents]))
         self._cumulative_rewards = dict(zip(self.agents, [0 for _ in self.agents]))
-        self.dones = dict(zip(self.agents, [False for _ in self.agents]))
+        self.terminations = dict(zip(self.agents, [False for _ in self.agents]))
+        self.truncations = dict(zip(self.agents, [False for _ in self.agents]))
         self.infos = dict(zip(self.agents, [{} for _ in self.agents]))
         self.accumulated_actions = []
 
@@ -168,6 +196,10 @@ class CookingEnvironment(AECEnv):
         return
 
     def step(self, action):
+
+        if self.terminations[self.agent_selection] or self.truncations[self.agent_selection]:
+            self._was_dead_step(action)
+            return
         agent = self.agent_selection
         self.accumulated_actions.append(action)
         for idx, agent in enumerate(self.agents):
@@ -184,13 +216,6 @@ class CookingEnvironment(AECEnv):
         # translated_actions = [action_translation_dict[actions[f"player_{idx}"]] for idx in range(len(actions))]
         self.world.perform_agent_actions(self.world.agents, actions)
 
-        # Visualize.
-        if self.record:
-            self.game.render()
-
-        if self.record:
-            self.game.save_image_obs(self.t)
-
         # Get an image observation
         # image_obs = self.game.get_image_obs()
         self.current_tensor_observation = self.get_tensor_representation()
@@ -199,7 +224,7 @@ class CookingEnvironment(AECEnv):
 
         done, rewards, goals = self.compute_rewards()
         for idx, agent in enumerate(self.agents):
-            self.dones[agent] = done
+            self.terminations[agent] = done
             self.rewards[agent] = rewards[idx]
             self.infos[agent] = info
 
@@ -307,5 +332,11 @@ class CookingEnvironment(AECEnv):
     def get_agent_names(self):
         return [agent.name for agent in self.world.agents]
 
-    def render(self, mode='human'):
-        pass
+    def render(self):
+        if not self.graphic_pipeline:
+            self.graphic_pipeline = GraphicPipeline(self.world, self.render_flag)
+            self.graphic_pipeline.initialize()
+        self.graphic_pipeline.render(self.render_flag)
+
+    def screenshot(self, path="screenshot.png"):
+        self.graphic_pipeline.save_image(path)

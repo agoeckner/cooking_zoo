@@ -36,14 +36,15 @@ class GraphicPipeline:
     CONTAINER_SCALE = 0.7
     ICON_SCALE = 1/16
 
-    def __init__(self, env, display=False):
-        self.env = env
+    def __init__(self, world, display=False):
+        pygame.init()
+        self.world = world
         self.display = display
         self.screen = None
         self.graphics_dir = 'misc/game/graphics'
         self.graphics_properties = GraphicsProperties(self.PIXEL_PER_TILE, self.HOLDING_SCALE, self.CONTAINER_SCALE,
-                                                      self.PIXEL_PER_TILE * self.env.unwrapped.world.width,
-                                                      self.PIXEL_PER_TILE * self.env.unwrapped.world.height,
+                                                      self.PIXEL_PER_TILE * self.world.width,
+                                                      self.PIXEL_PER_TILE * self.world.height,
                                                       (self.PIXEL_PER_TILE, self.PIXEL_PER_TILE),
                                                       (self.PIXEL_PER_TILE * self.HOLDING_SCALE,
                                                        self.PIXEL_PER_TILE * self.HOLDING_SCALE),
@@ -57,7 +58,7 @@ class GraphicPipeline:
         self.root_dir = path.parent.parent
         self.font = None
 
-    def on_init(self):
+    def initialize(self):
         if self.display:
             self.screen = pygame.display.set_mode((self.graphics_properties.width_pixel,
                                                    self.graphics_properties.height_pixel))
@@ -69,7 +70,7 @@ class GraphicPipeline:
         self.font = pygame.font.Font('freesansbold.ttf', 18)
         return True
 
-    def on_render(self):
+    def render(self, display):
         self.screen.fill(Color.FLOOR)
 
         self.draw_static_objects()
@@ -78,15 +79,16 @@ class GraphicPipeline:
 
         self.draw_dynamic_objects()
 
-        if self.display:
+        if display:
             pygame.display.flip()
             pygame.display.update()
+            pygame.event.get()
 
     def draw_square(self):
         pass
 
     def draw_static_objects(self):
-        objects = self.env.unwrapped.world.get_object_list()
+        objects = self.world.get_object_list()
         static_objects = [obj for obj in objects if isinstance(obj, StaticObject)]
         for static_object in static_objects:
             self.draw_static_object(static_object)
@@ -112,13 +114,13 @@ class GraphicPipeline:
                       static_object.display_text(), static_object.icons())
 
     def draw_dynamic_objects(self):
-        objects = self.env.unwrapped.world.get_object_list()
+        objects = self.world.get_object_list()
         dynamic_objects = [obj for obj in objects if isinstance(obj, DynamicObject)]
         dynamic_objects_grouped = defaultdict(list)
         for obj in dynamic_objects:
             dynamic_objects_grouped[obj.location].append(obj)
         for location, obj_list in dynamic_objects_grouped.items():
-            if any([agent.location == location for agent in self.env.unwrapped.world.agents]):
+            if any([agent.location == location for agent in self.world.agents]):
                 self.draw_dynamic_object_stack(obj_list, self.graphics_properties.holding_size,
                                                self.holding_location(location),
                                                self.graphics_properties.holding_container_size,
@@ -130,7 +132,7 @@ class GraphicPipeline:
                                                self.container_location(location))
 
     def draw_dynamic_object_stack(self, dynamic_objects, base_size, base_location, holding_size, holding_location):
-        content_obj_l = self.env.unwrapped.world.filter_obj(dynamic_objects, ContentObject)
+        content_obj_l = self.world.filter_obj(dynamic_objects, ContentObject)
         if len(content_obj_l) == 1:
             obj = content_obj_l[0]
             self.draw(obj.file_name(), base_size, base_location, obj.display_text(), obj.icons())
@@ -141,8 +143,8 @@ class GraphicPipeline:
             self.draw_food_stack(dynamic_objects, base_size, base_location)
 
     def draw_agents(self):
-        for idx, agent in enumerate(self.env.unwrapped.world.agents):
-            if len(self.env.unwrapped.world.agents) >= 2:
+        for idx, agent in enumerate(self.world.agents):
+            if len(self.world.agents) >= 2:
                 if idx == 0:
                     agent_string = "robot"
                 else:
@@ -229,7 +231,7 @@ class GraphicPipeline:
         return tuple((np.asarray(scaled_loc) + self.graphics_properties.pixel_per_tile * factor).astype(int))
 
     def get_image_obs(self):
-        self.on_render()
+        self.render(self.display)
         img_int = pygame.PixelArray(self.screen)
         img_rgb = np.zeros([img_int.shape[1], img_int.shape[0], 3], dtype=np.uint8)
         for i in range(img_int.shape[0]):
@@ -242,5 +244,8 @@ class GraphicPipeline:
 
     def save_image_obs(self, t):
         game_record_dir = 'misc/game/record/example/'
-        self.on_render()
+        self.render(self.display)
         pygame.image.save(self.screen, '{}/t={:03d}.png'.format(game_record_dir, t))
+
+    def save_image(self, path="screenshot.png"):
+        pygame.image.save(self.screen, path)
