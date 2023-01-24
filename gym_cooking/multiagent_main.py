@@ -19,8 +19,7 @@ max_num_timesteps = 1000
 recipes = ["TomatoSalad", 'TomatoSalad']
 
 env = parallel_env(level=level, num_agents=n_agents, record=record, max_steps=max_num_timesteps, recipes=recipes,
-                   obs_spaces=obs_spaces, action_scheme=action_scheme, ghost_agents=ghost_agents, render=render,
-                   manual_control=manual_control)
+                   obs_spaces=obs_spaces, action_scheme=action_scheme, ghost_agents=ghost_agents, render=render)
 
 obs = env.reset()
 
