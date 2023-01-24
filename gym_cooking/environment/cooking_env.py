@@ -43,7 +43,7 @@ def env(level, num_agents, record, max_steps, recipes, obs_spaces=None, action_s
 parallel_env = parallel_wrapper_fn(env)
 
 
-class CookingEnvironment(AECEnv, EzPickle):
+class CookingEnvironment(AECEnv):
     """Environment object for Overcooked."""
 
     metadata = {
@@ -57,11 +57,9 @@ class CookingEnvironment(AECEnv, EzPickle):
 
     def __init__(self, level, num_agents, record, max_steps, recipes, obs_spaces=None, allowed_objects=None,
                  action_scheme="scheme1", ghost_agents=0, render=False):
-        EzPickle.__init__(self, level, num_agents, record, max_steps, recipes, obs_spaces, allowed_objects,
-                          action_scheme, ghost_agents, render)
         super().__init__()
 
-        obs_spaces = obs_spaces or ["numeric"]
+        obs_spaces = obs_spaces or ["numeric_main"]
         self.allowed_obs_spaces = ["symbolic", "numeric", "numeric_main", "feature_vector"]
         self.action_scheme = action_scheme
         self.action_scheme_class = self.action_scheme_map[self.action_scheme]
@@ -155,13 +153,6 @@ class CookingEnvironment(AECEnv, EzPickle):
         # For tracking data during an episode.
         self.termination_info = ""
 
-        # Load world & distances.
-        self.world = CookingWorld(self.action_scheme_class)
-        self.world.load_level(level=self.level, num_agents=self.num_agents)
-
-        for recipe in self.recipe_graphs:
-            recipe.update_recipe_state(self.world)
-
         # if self.record:
         #     self.game = GameImage(
         #         filename=self.filename,
@@ -175,6 +166,13 @@ class CookingEnvironment(AECEnv, EzPickle):
         self.agents = self.possible_agents[:]
         self._agent_selector.reinit(self.agents)
         self.agent_selection = self._agent_selector.next()
+        
+        # Load world & distances.
+        self.world = CookingWorld(self.action_scheme_class)
+        self.world.load_level(level=self.level, num_agents=self.num_agents)
+
+        for recipe in self.recipe_graphs:
+            recipe.update_recipe_state(self.world)
 
         # Get an image observation
         # image_obs = self.game.get_image_obs()
