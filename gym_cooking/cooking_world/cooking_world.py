@@ -416,10 +416,12 @@ class CookingWorld:
     def load_level(self, level, num_agents):
         if self.init_world is not None:
             self.world_objects = defaultdict(list)
+            self.abstract_index = defaultdict(list)
             self.world_objects.update(copy.deepcopy(self.init_world))
             self.agents = copy.deepcopy(self.init_agents)
         else:
             self.load_new_style_level(level, num_agents)
+            self.abstract_index = defaultdict(list)
             self.init_world = defaultdict(list)
             self.init_world.update(copy.deepcopy(self.world_objects))
             self.init_agents = copy.deepcopy(self.agents)
