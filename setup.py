@@ -7,9 +7,9 @@ setup(name='cooking-gym',
       email='david@edv-drucksysteme.de',
       packages=find_packages() + [""],
       install_requires=[
-            'gym>=0.19.0',
-            'numpy>=1.21.2',
-            'pygame>=2.0.1',
+            'gym',
+            'numpy',
+            'pygame',
             'pettingzoo==1.22.2',
             'Pillow',
             'Gymnasium'
