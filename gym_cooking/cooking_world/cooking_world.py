@@ -47,6 +47,7 @@ class CookingWorld:
         self.id_counter = itertools.count(start=0, step=1)
         self.action_scheme = action_scheme_class
         self.init_world = None
+        self.init_agents = []
 
     def add_object(self, obj):
         self.world_objects[type(obj).__name__].append(obj)
@@ -417,6 +418,7 @@ class CookingWorld:
         if self.init_world is not None:
             self.world_objects = defaultdict(list)
             self.abstract_index = defaultdict(list)
+            self.id_counter = itertools.count(start=0, step=1)
             self.world_objects.update(copy.deepcopy(self.init_world))
             self.agents = copy.deepcopy(self.init_agents)
         else:

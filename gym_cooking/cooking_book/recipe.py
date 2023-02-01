@@ -47,6 +47,30 @@ class Recipe:
             objects_to_seek.update(node.objects_to_seek)
         return objects_to_seek
 
+    def get_required_objects(self):
+        # returns all objects that are required in the next step for the recipe
+        required_objects = set()
+        if self.root_node.marked:
+            return required_objects
+        if all([child.marked for child in self.root_node.contains]):
+            required_objects.add(self.root_node)
+            return required_objects
+        for child in self.root_node.contains:
+            if not child.marked:
+                required_objects.update(self.get_recursive_required_objects(child))
+        return required_objects
+
+    def get_recursive_required_objects(self, node):
+        required_objects = set()
+        if all([child.marked for child in node.contains]):
+            required_objects.add(node)
+            return required_objects
+        else:
+            for child in node.contains:
+                if not child.marked:
+                    required_objects.update(self.get_recursive_required_objects(child))
+            return required_objects
+
     def completed(self):
         return self.root_node.marked
 
