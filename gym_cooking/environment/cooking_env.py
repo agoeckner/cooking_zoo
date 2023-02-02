@@ -256,14 +256,17 @@ class CookingEnvironment(AECEnv):
 
         for idx, recipe in enumerate(self.recipe_graphs):
             goals_before = recipe.goals_completed(NUM_GOALS)
+            completion_before = recipe.completed()
             recipe.update_recipe_state(self.world)
             open_goals[idx] = recipe.goals_completed(NUM_GOALS)
-            bonus = recipe.completed() * 0.1
-            rewards[idx] = (sum(goals_before) - sum(open_goals[idx]) + bonus) * 5
-            try:
-                rewards[idx] -= sum([5 * (num - 1) for num in recipe.group_marked])
-            except AttributeError:
-                pass
+            # bonus = recipe.completed() * 0.1
+            malus = not recipe.completed() and completion_before
+            rewards[idx] = (sum(goals_before) - sum(open_goals[idx])) * 5
+            rewards[idx] -= malus
+            # try:
+            #     rewards[idx] -= sum([5 * (num - 1) for num in recipe.group_marked])
+            # except AttributeError:
+            #     pass
 
             rewards[idx] -= (5 / self.max_steps)
 

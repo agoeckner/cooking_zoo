@@ -7,12 +7,12 @@ n_agents = 2
 num_humans = 1
 max_steps = 100
 render = True
-obs_spaces = None
+obs_spaces = ["feature_vector"]
 action_scheme = "scheme3"
 ghost_agents = 0
 manual_control = True
 
-level = 'open_room_salad2'
+level = 'separated_room_interaction3'
 seed = 1
 record = False
 max_num_timesteps = 1000
