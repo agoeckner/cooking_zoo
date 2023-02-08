@@ -23,7 +23,7 @@ COLORS = ['blue', 'magenta', 'yellow', 'green']
 FPS = 20
 
 
-def env(level, num_agents, record, max_steps, recipes, obs_spaces=None, action_scheme="scheme1", ghost_agents=0,
+def env(level, meta_file, num_agents, record, max_steps, recipes, obs_spaces=None, action_scheme="scheme1", ghost_agents=0,
         render=False):
     """
     The env function wraps the environment in 3 wrappers by default. These
@@ -32,7 +32,7 @@ def env(level, num_agents, record, max_steps, recipes, obs_spaces=None, action_s
     to provide sane error messages. You can find full documentation for these methods
     elsewhere in the developer documentation.
     """
-    env_init = CookingEnvironment(level, num_agents, record, max_steps, recipes, obs_spaces,
+    env_init = CookingEnvironment(level, meta_file, num_agents, record, max_steps, recipes, obs_spaces,
                                   action_scheme=action_scheme, ghost_agents=ghost_agents, render=render)
     env_init = wrappers.CaptureStdoutWrapper(env_init)
     env_init = wrappers.AssertOutOfBoundsWrapper(env_init)
@@ -55,7 +55,7 @@ class CookingEnvironment(AECEnv):
 
     action_scheme_map = {"scheme1": ActionScheme1, "scheme2": ActionScheme2, "scheme3": ActionScheme3}
 
-    def __init__(self, level, num_agents, record, max_steps, recipes, obs_spaces=None, allowed_objects=None,
+    def __init__(self, level, meta_file, num_agents, record, max_steps, recipes, obs_spaces=None, allowed_objects=None,
                  action_scheme="scheme1", ghost_agents=0, render=False):
         super().__init__()
 
@@ -77,7 +77,10 @@ class CookingEnvironment(AECEnv):
         self.t = 0
         self.filename = ""
         self.set_filename()
-        self.world = CookingWorld(self.action_scheme_class)
+        self.meta_file = meta_file
+        self.world = CookingWorld(self.action_scheme_class, meta_file)
+        assert self.num_agents + ghost_agents <= self.world.meta_object_information["Agent"], \
+            "Too many agents for this level"
         self.recipes = recipes
         self.graphic_pipeline = None
         self.game = None
@@ -91,10 +94,10 @@ class CookingEnvironment(AECEnv):
         objects = defaultdict(list)
         objects.update(self.world.world_objects)
         objects["Agent"] = self.world.agents
-        feat_vec_l = sum([obj.feature_vector_length() for cls in GAME_CLASSES for obj in objects[ClassToString[cls]]])
-        agent_feature_length = StringToClass["Agent"].feature_vector_length()
-        self.feature_vector_representation_length = feat_vec_l + (agent_feature_length * self.ghost_agents)
-
+        self.feature_vector_representation_length = 0
+        for name, num in self.world.meta_object_information.items():
+            cls = StringToClass[name]
+            self.feature_vector_representation_length += cls.feature_vector_length() * num
         numeric_obs_space = {'symbolic_observation': gym.spaces.Box(low=0, high=10,
                                                                     shape=(self.world.width, self.world.height,
                                                                            self.graph_representation_length),
@@ -168,7 +171,7 @@ class CookingEnvironment(AECEnv):
         self.agent_selection = self._agent_selector.next()
         
         # Load world & distances.
-        self.world = CookingWorld(self.action_scheme_class)
+        self.world = CookingWorld(self.action_scheme_class, self.meta_file)
         self.world.load_level(level=self.level, num_agents=self.num_agents)
 
         for recipe in self.recipe_graphs:
@@ -297,7 +300,9 @@ class CookingEnvironment(AECEnv):
         objects.update(self.world.world_objects)
         objects["Agent"] = self.world.agents
         x, y = self.world_agent_mapping[agent].location
-        for cls in GAME_CLASSES:
+        for name, num in self.world.meta_object_information.items():
+            cls = StringToClass[name]
+            current_num = 0
             for obj in objects[ClassToString[cls]]:
                 features = list(obj.feature_vector_representation())
                 if features and obj is not self.world_agent_mapping[agent]:
@@ -307,6 +312,8 @@ class CookingEnvironment(AECEnv):
                     features[0] = features[0] / self.world.width
                     features[1] = features[1] / self.world.height
                 feature_vector.extend(features)
+                current_num += 1
+            feature_vector.extend([0] * (num - current_num) * cls.feature_vector_length())
         for idx in range(self.ghost_agents):
             features = self.world_agent_mapping[agent].feature_vector_representation()
             features[0] = 0

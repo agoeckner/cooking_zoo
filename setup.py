@@ -6,6 +6,7 @@ setup(name='cooking-gym',
       author='David Rother, Rose E. Wang',
       email='david@edv-drucksysteme.de',
       packages=find_packages() + [""],
+      python_requires='>3.7',
       install_requires=[
             'gym',
             'numpy',

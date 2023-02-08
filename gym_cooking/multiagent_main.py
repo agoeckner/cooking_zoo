@@ -7,7 +7,8 @@ n_agents = 2
 num_humans = 1
 max_steps = 100
 render = True
-obs_spaces = None
+obs_spaces = ["feature_vector", "feature_vector"]
+meta_file = "example"
 action_scheme = "scheme1"
 ghost_agents = 0
 manual_control = False
@@ -18,7 +19,7 @@ record = False
 max_num_timesteps = 1000
 recipes = ["TomatoSalad", 'TomatoSalad']
 
-env = parallel_env(level=level, num_agents=n_agents, record=record, max_steps=max_num_timesteps, recipes=recipes,
+env = parallel_env(level=level, meta_file=meta_file, num_agents=n_agents, record=record, max_steps=max_num_timesteps, recipes=recipes,
                    obs_spaces=obs_spaces, action_scheme=action_scheme, ghost_agents=ghost_agents, render=render)
 
 obs = env.reset()

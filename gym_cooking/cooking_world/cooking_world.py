@@ -38,7 +38,7 @@ class CookingWorld:
 
     # AGENT_ACTIONS: 0: Noop, 1: Left, 2: right, 3: down, 4: up, 5: interact
 
-    def __init__(self, action_scheme_class=ActionScheme1):
+    def __init__(self, action_scheme_class=ActionScheme1, meta_file=""):
         self.agents = []
         self.width = 0
         self.height = 0
@@ -48,6 +48,8 @@ class CookingWorld:
         self.action_scheme = action_scheme_class
         self.init_world = None
         self.init_agents = []
+        self.meta_object_information = self.load_meta_file(meta_file)
+        self.loaded_object_counter = defaultdict(int)
 
     def add_object(self, obj):
         self.world_objects[type(obj).__name__].append(obj)
@@ -175,7 +177,7 @@ class CookingWorld:
             content_obj_l = self.filter_obj(dynamic_objects, ContentObject)
             if len(content_obj_l) == 1:
                 try:
-                    obj = content_obj_l[0].content.pop(-1) #pick the last object put on
+                    obj = content_obj_l[0].content.pop(-1)  # pick the last object put on
                     agent.grab(obj)
                 except IndexError:
                     pass
@@ -351,6 +353,9 @@ class CookingWorld:
                     if counter:
                         if len(counter) != 1:
                             raise ValueError("Too many counter in one place detected during initialization")
+                        if self.meta_object_information[name] <= self.loaded_object_counter[name]:
+                            raise ValueError(f"Too many {name} objects loaded")
+                        self.loaded_object_counter[name] += 1
                         self.delete_object(counter[0])
                         obj = StringToClass[name](unique_id=next(self.id_counter), location=(x, y))
                         self.add_object(obj)
@@ -377,6 +382,9 @@ class CookingWorld:
                     dynamic_objects_loc = self.get_objects_at((x, y), DynamicObject)
 
                     if len(static_objects_loc) == 1 and not dynamic_objects_loc:
+                        if self.meta_object_information[name] <= self.loaded_object_counter[name]:
+                            raise ValueError(f"Too many {name} objects loaded")
+                        self.loaded_object_counter[name] += 1
                         obj = StringToClass[name](unique_id=next(self.id_counter), location=(x, y))
                         self.add_object(obj)
                         static_objects_loc[0].add_content(obj)
@@ -406,6 +414,10 @@ class CookingWorld:
                     if not any([(x, y) == agent.location for agent in self.agents]) and static_objects_loc:
                         agent = Agent(next(self.id_counter), (int(x), int(y)), self.COLORS[len(self.agents)],
                                       'agent-' + str(len(self.agents) + 1))
+                        name = "Agent"
+                        if self.meta_object_information[name] <= self.loaded_object_counter[name]:
+                            raise ValueError(f"Too many {name} objects loaded")
+                        self.loaded_object_counter[name] += 1
                         self.agents.append(agent)
                         static_objects_loc[0].add_content(agent)
                         break
@@ -413,6 +425,19 @@ class CookingWorld:
                         time_out += 1
                         if time_out > 1000:
                             raise ValueError(f"Can't find valid position for agent: {agent_object} in {time_out} steps")
+
+    @staticmethod
+    def load_meta_file(meta_file):
+        my_path = os.path.realpath(__file__)
+        dir_name = os.path.dirname(my_path)
+        path = Path(dir_name)
+        parent = path.parent / f"utils/meta_files/{meta_file}.json"
+        with open(parent) as json_file:
+            meta_object = json.load(json_file)
+            json_file.close()
+        # dictionaries in python are ordered since 3.7
+        meta_dict = {list(dic.keys())[0]: list(dic.values())[0] for dic in meta_object}
+        return meta_dict
 
     def load_level(self, level, num_agents):
         if self.init_world is not None:
