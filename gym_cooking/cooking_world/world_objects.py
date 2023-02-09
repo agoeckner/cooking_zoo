@@ -334,7 +334,7 @@ class Onion(ChopFood):
         return 1, int(self.chop_state == ChopFoodStates.CHOPPED)
 
     def feature_vector_representation(self):
-        return list(self.location) + [int(self.chop_state == ChopFoodStates.CHOPPED)]
+        return list(self.location) + [int(not self.done()), int(self.done())]
 
     @classmethod
     def state_length(cls):
@@ -342,7 +342,7 @@ class Onion(ChopFood):
 
     @classmethod
     def feature_vector_length(cls):
-        return 3
+        return 4
 
     def file_name(self) -> str:
         if self.done():
@@ -369,7 +369,7 @@ class Tomato(ChopFood):
         return 1, int(self.chop_state == ChopFoodStates.CHOPPED)
 
     def feature_vector_representation(self):
-        return list(self.location) + [int(self.chop_state == ChopFoodStates.CHOPPED)]
+        return list(self.location) + [int(not self.done()), int(self.done())]
 
     @classmethod
     def state_length(cls):
@@ -377,7 +377,7 @@ class Tomato(ChopFood):
 
     @classmethod
     def feature_vector_length(cls):
-        return 3
+        return 4
 
     def file_name(self) -> str:
         if self.done():
@@ -404,7 +404,7 @@ class Lettuce(ChopFood):
         return 1, int(self.chop_state == ChopFoodStates.CHOPPED)
 
     def feature_vector_representation(self):
-        return list(self.location) + [int(self.chop_state == ChopFoodStates.CHOPPED)]
+        return list(self.location) + [int(not self.done()), int(self.done())]
 
     @classmethod
     def state_length(cls):
@@ -412,7 +412,7 @@ class Lettuce(ChopFood):
 
     @classmethod
     def feature_vector_length(cls):
-        return 3
+        return 4
 
     def file_name(self) -> str:
         if self.done():
@@ -439,7 +439,8 @@ class Carrot(BlenderFood, ChopFood):
         return 1, int(self.chop_state == ChopFoodStates.CHOPPED)
 
     def feature_vector_representation(self):
-        return list(self.location) + [int(self.chop_state == ChopFoodStates.CHOPPED)]
+        return list(self.location) + [int(not self.done()), int(self.chop_state == ChopFoodStates.CHOPPED),
+                                      int(self.blend_state == BlenderFoodStates.MASHED)]
 
     @classmethod
     def state_length(cls):
@@ -477,7 +478,7 @@ class Cucumber(ChopFood):
         return 1, int(self.chop_state == ChopFoodStates.CHOPPED)
 
     def feature_vector_representation(self):
-        return list(self.location) + [int(self.chop_state == ChopFoodStates.CHOPPED)]
+        return list(self.location) + [int(not self.done()), int(self.done())]
 
     @classmethod
     def state_length(cls):
@@ -509,7 +510,8 @@ class Banana(BlenderFood, ChopFood):
         return 1, int(self.chop_state == ChopFoodStates.CHOPPED)
 
     def feature_vector_representation(self):
-        return list(self.location) + [int(self.chop_state == ChopFoodStates.CHOPPED)]
+        return list(self.location) + [int(not self.done()), int(self.chop_state == ChopFoodStates.CHOPPED),
+                                      int(self.blend_state == BlenderFoodStates.MASHED)]
 
     @classmethod
     def state_length(cls):
@@ -524,7 +526,7 @@ class Banana(BlenderFood, ChopFood):
             if self.chop_state == ChopFoodStates.CHOPPED:
                 return "ChoppedBanana"
             elif self.blend_state == BlenderFoodStates.MASHED:
-                return "default_dynamic"
+                return "ChoppedBanana"
         else:
             return "FreshBanana"
 
@@ -547,7 +549,8 @@ class Apple(BlenderFood, ChopFood):
         return 1, int(self.chop_state == ChopFoodStates.CHOPPED)
 
     def feature_vector_representation(self):
-        return list(self.location) + [int(self.chop_state == ChopFoodStates.CHOPPED)]
+        return list(self.location) + [int(not self.done()), int(self.chop_state == ChopFoodStates.CHOPPED),
+                                      int(self.blend_state == BlenderFoodStates.MASHED)]
 
     @classmethod
     def state_length(cls):
@@ -579,7 +582,7 @@ class Watermelon(ChopFood):
         return 1, int(self.chop_state == ChopFoodStates.CHOPPED)
 
     def feature_vector_representation(self):
-        return list(self.location) + [int(self.chop_state == ChopFoodStates.CHOPPED)]
+        return list(self.location) + [int(not self.done()), int(self.done())]
 
     @classmethod
     def state_length(cls):

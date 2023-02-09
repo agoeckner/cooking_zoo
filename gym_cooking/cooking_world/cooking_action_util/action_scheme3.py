@@ -37,7 +37,7 @@ def resolve_walking_action(world, agent, action):
 def resolve_interaction(world, agent, target_location):
     target = world.get_objects_at(target_location, StaticObject)
     dynamic_objects = world.get_objects_at(target_location, DynamicObject)
-    if isinstance(target[0], Cutboard) and any([not d.done() for d in dynamic_objects]):
+    if isinstance(target[0], ActionObject) and any([not d.done() for d in dynamic_objects]):
         world.resolve_execute_action(agent)
     else:
         world.resolve_primary_interaction(agent)

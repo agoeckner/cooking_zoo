@@ -222,9 +222,9 @@ class CookingEnvironment(AECEnv):
 
         info = {"t": self.t, "termination_info": self.termination_info}
 
-        done, rewards, goals = self.compute_rewards()
+        dones, rewards, goals = self.compute_rewards()
         for idx, agent in enumerate(self.agents):
-            self.terminations[agent] = done
+            self.terminations[agent] = dones[idx]
             self.rewards[agent] = rewards[idx]
             self.infos[agent] = info
 
@@ -249,50 +249,32 @@ class CookingEnvironment(AECEnv):
         return returned_observation
 
     def compute_rewards(self):
-        done = False
+        dones = [False] * len(self.recipes)
         rewards = [0] * len(self.recipes)
         open_goals = [[0]] * len(self.recipes)
         # Done if the episode maxes out
         if self.t >= self.max_steps and self.max_steps:
             self.termination_info = f"Terminating because passed {self.max_steps} timesteps"
-            done = True
+            # change every entry in dones to true
+            dones = [True] * len(self.recipes)
 
         for idx, recipe in enumerate(self.recipe_graphs):
             goals_before = recipe.goals_completed(NUM_GOALS)
             completion_before = recipe.completed()
             recipe.update_recipe_state(self.world)
             open_goals[idx] = recipe.goals_completed(NUM_GOALS)
-            # bonus = recipe.completed() * 0.1
             malus = not recipe.completed() and completion_before
             rewards[idx] = (sum(goals_before) - sum(open_goals[idx])) * 5
             rewards[idx] -= malus
-            # try:
-            #     rewards[idx] -= sum([5 * (num - 1) for num in recipe.group_marked])
-            # except AttributeError:
-            #     pass
 
             rewards[idx] -= (5 / self.max_steps)
-
-            # objects_to_seek = recipe.get_objects_to_seek()
-            # if objects_to_seek:
-            #     distances = []
-            #     for cls in objects_to_seek:
-            #         world_objects = self.world.world_objects[ClassToString[cls]]
-            #         min_distance = min([abs(self.world.agents[idx].location[0] - obj.location[0]) / self.world.height +
-            #                             abs(self.world.agents[idx].location[1] - obj.location[1]) / self.world.width
-            #                             for obj in world_objects])
-            #         distances.append(min_distance)
-            #
-            #     rewards[idx] -= min(distances)
 
         for idx, agent in enumerate(self.world.agents):
             if not agent.interacts_with:
                 rewards[idx] -= 0.01
 
-        if all((recipe.completed() for recipe in self.recipe_graphs)):
-            self.termination_info = "Terminating because all deliveries were completed"
-            done = True
-        return done, rewards, open_goals
+        dones = [recipe.completed() or done for recipe, done in zip(self.recipe_graphs, dones)]
+        return dones, rewards, open_goals
 
     def get_feature_vector(self, agent):
         feature_vector = []
