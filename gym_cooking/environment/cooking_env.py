@@ -23,8 +23,8 @@ COLORS = ['blue', 'magenta', 'yellow', 'green']
 FPS = 20
 
 
-def env(level, meta_file, num_agents, record, max_steps, recipes, obs_spaces=None, action_scheme="scheme1", ghost_agents=0,
-        render=False):
+def env(level, meta_file, num_agents, record, max_steps, recipes, obs_spaces=None, group_finish=False,
+        action_scheme="scheme1", ghost_agents=0, render=False):
     """
     The env function wraps the environment in 3 wrappers by default. These
     wrappers contain logic that is common to many pettingzoo environments.
@@ -33,7 +33,8 @@ def env(level, meta_file, num_agents, record, max_steps, recipes, obs_spaces=Non
     elsewhere in the developer documentation.
     """
     env_init = CookingEnvironment(level, meta_file, num_agents, record, max_steps, recipes, obs_spaces,
-                                  action_scheme=action_scheme, ghost_agents=ghost_agents, render=render)
+                                  group_finish=group_finish, action_scheme=action_scheme, ghost_agents=ghost_agents,
+                                  render=render)
     env_init = wrappers.CaptureStdoutWrapper(env_init)
     env_init = wrappers.AssertOutOfBoundsWrapper(env_init)
     env_init = wrappers.OrderEnforcingWrapper(env_init)
@@ -55,8 +56,8 @@ class CookingEnvironment(AECEnv):
 
     action_scheme_map = {"scheme1": ActionScheme1, "scheme2": ActionScheme2, "scheme3": ActionScheme3}
 
-    def __init__(self, level, meta_file, num_agents, record, max_steps, recipes, obs_spaces=None, allowed_objects=None,
-                 action_scheme="scheme1", ghost_agents=0, render=False):
+    def __init__(self, level, meta_file, num_agents, record, max_steps, recipes, obs_spaces=None, group_finish=False,
+                 allowed_objects=None, action_scheme="scheme1", ghost_agents=0, render=False):
         super().__init__()
 
         obs_spaces = obs_spaces or ["numeric_main"]
@@ -115,6 +116,7 @@ class CookingEnvironment(AECEnv):
         self.action_spaces = {agent: gym.spaces.Discrete(len(self.action_scheme_class.ACTIONS))
                               for agent in self.possible_agents}
         self.has_reset = True
+        self.group_finish = group_finish
 
         self.recipe_mapping = dict(zip(self.possible_agents, self.recipe_graphs))
         self.agent_name_mapping = dict(zip(self.possible_agents, list(range(len(self.possible_agents)))))
@@ -222,11 +224,11 @@ class CookingEnvironment(AECEnv):
 
         info = {"t": self.t, "termination_info": self.termination_info}
 
-        dones, rewards, goals = self.compute_rewards()
+        dones, rewards, goals, infos = self.compute_rewards()
         for idx, agent in enumerate(self.agents):
             self.terminations[agent] = dones[idx]
             self.rewards[agent] = rewards[idx]
-            self.infos[agent] = info
+            self.infos[agent] = {**info, **infos[idx]}
 
     def observe(self, agent):
         observation = []
@@ -252,6 +254,7 @@ class CookingEnvironment(AECEnv):
         dones = [False] * len(self.recipes)
         rewards = [0] * len(self.recipes)
         open_goals = [[0]] * len(self.recipes)
+        infos = [{}] * len(self.recipes)
         # Done if the episode maxes out
         if self.t >= self.max_steps and self.max_steps:
             self.termination_info = f"Terminating because passed {self.max_steps} timesteps"
@@ -273,8 +276,14 @@ class CookingEnvironment(AECEnv):
             if not agent.interacts_with:
                 rewards[idx] -= 0.01
 
-        dones = [recipe.completed() or done for recipe, done in zip(self.recipe_graphs, dones)]
-        return dones, rewards, open_goals
+        recipe_evaluations = [recipe.completed() for recipe in self.recipe_graphs]
+        infos = [{f"player_{idx}": evaluation} for idx, evaluation in enumerate(recipe_evaluations)]
+        if self.group_finish:
+            recipe_dones = all([recipe.completed() for recipe in self.recipe_graphs])
+        else:
+            recipe_dones = any([recipe.completed() for recipe in self.recipe_graphs])
+        dones = [recipe_dones or done for done in dones]
+        return dones, rewards, open_goals, infos
 
     def get_feature_vector(self, agent):
         feature_vector = []

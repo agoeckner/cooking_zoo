@@ -5,20 +5,18 @@ from time import sleep
 
 n_agents = 2
 num_humans = 1
-max_steps = 100
+max_steps = 400
 render = True
 obs_spaces = ["feature_vector"]
 action_scheme = "scheme3"
 ghost_agents = 0
-manual_control = True
-
-level = 'separated_room_interaction3'
-seed = 1
+manual_control = False
 record = False
-max_num_timesteps = 1000
-recipes = ["TomatoSalad", 'TomatoSalad']
+meta_file = "experiment"
+level = "separated_room_experiment"
+recipes = ["TomatoLettuceSalad", "CarrotBanana"]
 
-env = parallel_env(level=level, num_agents=n_agents, record=record, max_steps=max_num_timesteps, recipes=recipes,
+env = parallel_env(level=level, meta_file=meta_file, num_agents=n_agents, record=record, max_steps=max_steps, recipes=recipes,
                    obs_spaces=obs_spaces, action_scheme=action_scheme, ghost_agents=ghost_agents, render=render)
 
 obs = env.reset()
@@ -36,12 +34,13 @@ cum_sum = 0
 idx = 0
 
 while not all(terminations.values()):
-    action = {"player_0": action_space.sample(), "player_1": manual_policy("player_1")}
+    action = {"player_1": action_space.sample(), "player_0": manual_policy("player_1")}
     observations, rewards, terminations, truncations, infos = env.step(action)
     env.render()
     env.unwrapped.screenshot()
     print(rewards)
     print(terminations)
+    print(truncations)
     cum_sum += rewards["player_0"]
     sleep(0.1)
     idx += 1
