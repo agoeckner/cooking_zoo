@@ -10,9 +10,9 @@ action_scheme = "scheme3"
 ghost_agents = 0
 manual_control = False
 record = False
-meta_file = "example"
-level = "separated_room_experiment"
-recipes = ["MashedCarrotBanana"]  # "CarrotBanana"
+meta_file = "open_room"
+level = "open_room_salad"
+recipes = ["TomatoLettuceSalad"]  # "CarrotBanana"
 
 env = cooking_env.parallel_env(level=level, meta_file=meta_file, num_agents=n_agents, record=record,
                                max_steps=max_steps, recipes=recipes, obs_spaces=obs_spaces,

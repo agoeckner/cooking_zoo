@@ -369,6 +369,7 @@ class CookingWorld:
 
     def parse_dynamic_objects(self, level_object):
         dynamic_objects = level_object["DYNAMIC_OBJECTS"]
+        dynamic_excluded_positions = level_object["DYNAMIC_EXCLUDED_POSITIONS"]
         for dynamic_object in dynamic_objects:
             name = list(dynamic_object.keys())[0]
             for idx in range(dynamic_object[name]["COUNT"]):
@@ -381,7 +382,7 @@ class CookingWorld:
                     static_objects_loc = self.get_objects_at((x, y), Counter)
                     dynamic_objects_loc = self.get_objects_at((x, y), DynamicObject)
 
-                    if len(static_objects_loc) == 1 and not dynamic_objects_loc:
+                    if len(static_objects_loc) == 1 and not dynamic_objects_loc and [x, y] not in dynamic_excluded_positions:
                         if self.meta_object_information[name] <= self.loaded_object_counter[name]:
                             raise ValueError(f"Too many {name} objects loaded")
                         self.loaded_object_counter[name] += 1

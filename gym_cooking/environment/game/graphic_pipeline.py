@@ -185,7 +185,7 @@ class GraphicPipeline:
         self.screen.blit(image, location)
 
         if text:
-            text_surface_object = self.font.render(text, True, (0, 0, 0), None)
+            text_surface_object = self.font.render()
             text_field = text_surface_object.get_rect()
             text_field.center = (location[0] + size[0] // 2, location[1] + size[1] // 2)
             self.screen.blit(text_surface_object, text_field)

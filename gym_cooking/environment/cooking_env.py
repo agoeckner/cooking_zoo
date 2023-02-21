@@ -49,6 +49,7 @@ class CookingEnvironment(AECEnv):
 
     metadata = {
         "render_modes": ["human", "rgb_array"],
+        'render.modes': ['human', "rgb_array"],
         "name": "cookingzoo_v1",
         "is_parallelizable": True,
         "render_fps": FPS,
@@ -305,6 +306,30 @@ class CookingEnvironment(AECEnv):
                 feature_vector.extend(features)
                 current_num += 1
             feature_vector.extend([0] * (num - current_num) * cls.feature_vector_length())
+
+        new_vector = np.array(feature_vector)
+        # old_vector = self.get_feature_vector_old(agent)
+        # dif = new_vector - old_vector
+        # print(dif)
+        return new_vector
+
+    def get_feature_vector_old(self, agent):
+        feature_vector = []
+        objects = defaultdict(list)
+        objects.update(self.world.world_objects)
+        objects["Agent"] = self.world.agents
+        x, y = self.world_agent_mapping[agent].location
+        for name, num in self.world.meta_object_information.items():
+            cls = StringToClass[name]
+            for obj in objects[ClassToString[cls]]:
+                features = list(obj.feature_vector_representation())
+                if features and obj is not self.world_agent_mapping[agent]:
+                    features[0] = (features[0] - x) / self.world.width
+                    features[1] = (features[1] - y) / self.world.height
+                if obj is self.world_agent_mapping[agent]:
+                    features[0] = features[0] / self.world.width
+                    features[1] = features[1] / self.world.height
+                feature_vector.extend(features)
         for idx in range(self.ghost_agents):
             features = self.world_agent_mapping[agent].feature_vector_representation()
             features[0] = 0
@@ -330,7 +355,7 @@ class CookingEnvironment(AECEnv):
     def get_agent_names(self):
         return [agent.name for agent in self.world.agents]
 
-    def render(self):
+    def render(self, **kwargs):
         if not self.graphic_pipeline:
             self.graphic_pipeline = GraphicPipeline(self.world, self.render_flag)
             self.graphic_pipeline.initialize()
