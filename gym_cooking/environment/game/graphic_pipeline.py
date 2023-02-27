@@ -145,7 +145,7 @@ class GraphicPipeline:
     def draw_agents(self):
         for idx, agent in enumerate(self.world.agents):
             if len(self.world.agents) >= 2:
-                if idx == 0:
+                if idx == 1:
                     agent_string = "robot"
                 else:
                     agent_string = "agent"

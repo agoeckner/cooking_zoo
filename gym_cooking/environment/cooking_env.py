@@ -23,7 +23,7 @@ COLORS = ['blue', 'magenta', 'yellow', 'green']
 FPS = 20
 
 
-def env(level, meta_file, num_agents, record, max_steps, recipes, obs_spaces=None, group_finish=False,
+def env(level, meta_file, num_agents, record, max_steps, recipes, step_reward=True, obs_spaces=None, group_finish=False,
         action_scheme="scheme1", ghost_agents=0, render=False):
     """
     The env function wraps the environment in 3 wrappers by default. These
@@ -32,7 +32,7 @@ def env(level, meta_file, num_agents, record, max_steps, recipes, obs_spaces=Non
     to provide sane error messages. You can find full documentation for these methods
     elsewhere in the developer documentation.
     """
-    env_init = CookingEnvironment(level, meta_file, num_agents, record, max_steps, recipes, obs_spaces,
+    env_init = CookingEnvironment(level, meta_file, num_agents, record, max_steps, recipes, step_reward, obs_spaces,
                                   group_finish=group_finish, action_scheme=action_scheme, ghost_agents=ghost_agents,
                                   render=render)
     env_init = wrappers.CaptureStdoutWrapper(env_init)
@@ -57,8 +57,8 @@ class CookingEnvironment(AECEnv):
 
     action_scheme_map = {"scheme1": ActionScheme1, "scheme2": ActionScheme2, "scheme3": ActionScheme3}
 
-    def __init__(self, level, meta_file, num_agents, record, max_steps, recipes, obs_spaces=None, group_finish=False,
-                 allowed_objects=None, action_scheme="scheme1", ghost_agents=0, render=False):
+    def __init__(self, level, meta_file, num_agents, record, max_steps, recipes, step_reward=True, obs_spaces=None,
+                 group_finish=False, allowed_objects=None, action_scheme="scheme1", ghost_agents=0, render=False):
         super().__init__()
 
         obs_spaces = obs_spaces or ["numeric_main"]
@@ -136,6 +136,7 @@ class CookingEnvironment(AECEnv):
                                                     self.graph_representation_length))
         self.render_mode = "human"
         self.np_random = None
+        self.step_reward = step_reward
 
     def set_filename(self):
         self.filename = f"{self.level}_agents{self.num_agents}"
@@ -268,9 +269,12 @@ class CookingEnvironment(AECEnv):
             recipe.update_recipe_state(self.world)
             open_goals[idx] = recipe.goals_completed(NUM_GOALS)
             malus = not recipe.completed() and completion_before
-            rewards[idx] = (sum(goals_before) - sum(open_goals[idx])) * 5
+            bonus = recipe.completed() and not completion_before
+            if self.step_reward:
+                rewards[idx] += (sum(goals_before) - sum(open_goals[idx])) * 5
+            else:
+                rewards[idx] += bonus * 20
             rewards[idx] -= malus
-
             rewards[idx] -= (5 / self.max_steps)
 
         for idx, agent in enumerate(self.world.agents):
