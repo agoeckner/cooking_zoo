@@ -137,6 +137,11 @@ class CookingEnvironment(AECEnv):
         self.render_mode = "human"
         self.np_random = None
         self.step_reward = step_reward
+        recipe_list = list(RECIPES.keys())
+        # get index of recipe in recipe_list
+        idx = [recipe_list.index(recipe) for recipe in self.recipes]
+        # get one hot numpy vector
+        self.goal_vectors = dict(zip(self.agents, [np.eye(len(RECIPES))[i] for i in idx]))
 
     def set_filename(self):
         self.filename = f"{self.level}_agents{self.num_agents}"
@@ -230,7 +235,7 @@ class CookingEnvironment(AECEnv):
         for idx, agent in enumerate(self.agents):
             self.terminations[agent] = dones[idx]
             self.rewards[agent] = rewards[idx]
-            self.infos[agent] = {**info, **infos[idx]}
+            self.infos[agent] = {"goal_vector": self.goal_vectors[agent], **info, **infos[idx]}
 
     def observe(self, agent):
         observation = []

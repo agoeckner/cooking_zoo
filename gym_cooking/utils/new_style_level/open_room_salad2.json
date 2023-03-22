@@ -6,5 +6,6 @@
   "DYNAMIC_OBJECTS": [{"Plate":  {"COUNT": 1, "X_POSITION": [1], "Y_POSITION":  [4]}},
                       {"Tomato": {"COUNT": 1, "X_POSITION": [4], "Y_POSITION":  [3]}}
   ],
-  "AGENTS": [{"MAX_COUNT": 4, "X_POSITION": [1 ,2, 3], "Y_POSITION":  [1 ,2, 3]}]
+  "AGENTS": [{"MAX_COUNT": 4, "X_POSITION": [1 ,2, 3], "Y_POSITION":  [1 ,2, 3]}],
+  "DYNAMIC_EXCLUDED_POSITIONS": [[0, 0], [3, 0], [6, 0], [0, 6], [3, 6], [6, 6]]
 }
