@@ -607,6 +607,45 @@ class Watermelon(ChopFood):
         return f""
 
 
+class Bread(ChopFood):
+
+    def __init__(self, unique_id, location):
+        super().__init__(unique_id, location)
+        self.slices = 2
+        self.chop_state = ChopFoodStates.FRESH
+
+    def done(self):
+        return self.chop_state == ChopFoodStates.CHOPPED
+
+    def chop(self):
+        if self.slices > 1:
+            self.slices -= 1
+            if self.slices == 1:
+                self.chop_state = ChopFoodStates.CHOPPED
+            return [], [], True
+        else:
+            return [], [], False
+
+    def numeric_state_representation(self):
+        return 1, 0, 0
+
+    @classmethod
+    def state_length(cls):
+        return 3
+
+    def file_name(self) -> str:
+        if self.chop_state == ChopFoodStates.CHOPPED:
+            return "ChoppedFreshBread"
+        else:
+            return "Bread"
+
+    def icons(self) -> List[str]:
+        return []
+
+    def display_text(self) -> str:
+        return f"{self.unique_id} {'T' if self.free else 'F'}"
+
+
 class Agent(Object):
 
     def __init__(self, unique_id, location, color, name):
