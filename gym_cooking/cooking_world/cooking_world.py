@@ -44,7 +44,6 @@ class CookingWorld:
         self.height = 0
         self.world_objects = defaultdict(list)
         self.abstract_index = defaultdict(list)
-        self.id_counter = itertools.count(start=0, step=1)
         self.action_scheme = action_scheme_class
         self.init_world = None
         self.init_agents = []
@@ -199,7 +198,6 @@ class CookingWorld:
                 self.delete_object(del_obj)
                 self.delete_from_index(del_obj)
             for new_obj in obj_list_created:
-                new_obj.unique_id = next(self.id_counter)
                 self.add_object(new_obj)
                 self.add_to_index(new_obj)
 
@@ -307,9 +305,9 @@ class CookingWorld:
                 agent.interacts_with.append(static_object)
 
     def load_new_style_level(self, level_name, num_agents):
-        self.id_counter = itertools.count(start=0, step=1)
         my_path = os.path.realpath(__file__)
         dir_name = os.path.dirname(my_path)
+        reset_world_counter()
         path = Path(dir_name)
         parent = path.parent / f"utils/new_style_level/{level_name}.json"
         with open(parent) as json_file:
@@ -327,10 +325,10 @@ class CookingWorld:
         for y, line in enumerate(iter(level_layout.splitlines())):
             for x, char in enumerate(line):
                 if char == "-":
-                    counter = Counter(unique_id=next(self.id_counter), location=(x, y))
+                    counter = Counter(location=(x, y))
                     self.add_object(counter)
                 else:
-                    floor = Floor(unique_id=next(self.id_counter), location=(x, y))
+                    floor = Floor(location=(x, y))
                     self.add_object(floor)
         self.width = x + 1
         self.height = y + 1
@@ -342,6 +340,12 @@ class CookingWorld:
             for idx in range(static_object[name]["COUNT"]):
                 time_out = 0
                 while True:
+                    try:
+                        optional = static_object[name]["OPTIONAL"]
+                        if optional <= random.random():
+                            break
+                    except KeyError:
+                        pass
                     x = random.sample(static_object[name]["X_POSITION"], 1)[0]
                     y = random.sample(static_object[name]["Y_POSITION"], 1)[0]
                     if x < 0 or y < 0 or x > self.width or y > self.height:
@@ -357,7 +361,7 @@ class CookingWorld:
                             raise ValueError(f"Too many {name} objects loaded")
                         self.loaded_object_counter[name] += 1
                         self.delete_object(counter[0])
-                        obj = StringToClass[name](unique_id=next(self.id_counter), location=(x, y))
+                        obj = StringToClass[name](location=(x, y))
                         self.add_object(obj)
                         break
                     else:
@@ -375,6 +379,13 @@ class CookingWorld:
             for idx in range(dynamic_object[name]["COUNT"]):
                 time_out = 0
                 while True:
+                    try:
+                        optional = dynamic_object[name]["OPTIONAL"]
+                        if optional <= random.random():
+                            break
+                    except KeyError:
+                        pass
+
                     x = random.sample(dynamic_object[name]["X_POSITION"], 1)[0]
                     y = random.sample(dynamic_object[name]["Y_POSITION"], 1)[0]
                     if x < 0 or y < 0 or x > self.width or y > self.height:
@@ -386,7 +397,7 @@ class CookingWorld:
                         if self.meta_object_information[name] <= self.loaded_object_counter[name]:
                             raise ValueError(f"Too many {name} objects loaded")
                         self.loaded_object_counter[name] += 1
-                        obj = StringToClass[name](unique_id=next(self.id_counter), location=(x, y))
+                        obj = StringToClass[name](location=(x, y))
                         self.add_object(obj)
                         static_objects_loc[0].add_content(obj)
                         break
@@ -413,7 +424,7 @@ class CookingWorld:
                         raise ValueError(f"Position {x} {y} of agent is out of bounds set by the level layout!")
                     static_objects_loc = self.get_objects_at((x, y), Floor)
                     if not any([(x, y) == agent.location for agent in self.agents]) and static_objects_loc:
-                        agent = Agent(next(self.id_counter), (int(x), int(y)), self.COLORS[len(self.agents)],
+                        agent = Agent((int(x), int(y)), self.COLORS[len(self.agents)],
                                       'agent-' + str(len(self.agents) + 1))
                         name = "Agent"
                         if self.meta_object_information[name] <= self.loaded_object_counter[name]:
@@ -444,7 +455,7 @@ class CookingWorld:
         if self.init_world is not None:
             self.world_objects = defaultdict(list)
             self.abstract_index = defaultdict(list)
-            self.id_counter = itertools.count(start=0, step=1)
+            reset_world_counter()
             self.world_objects.update(copy.deepcopy(self.init_world))
             self.agents = copy.deepcopy(self.init_agents)
         else:

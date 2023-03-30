@@ -2,13 +2,22 @@ from gym_cooking.cooking_world.abstract_classes import *
 from gym_cooking.cooking_world.constants import *
 import inspect
 import sys
-import numpy as np
 from typing import List
+import itertools
+
+
+world_id_counter = itertools.count(start=0, step=1)
+
+
+def reset_world_counter():
+    global world_id_counter
+    world_id_counter = itertools.count(start=0, step=1)
 
 
 class Floor(StaticObject, ContentObject):
 
-    def __init__(self, unique_id, location):
+    def __init__(self, location):
+        unique_id = next(world_id_counter)
         super().__init__(unique_id, location, True)
 
     def accepts(self, dynamic_object) -> bool:
@@ -47,7 +56,8 @@ class Floor(StaticObject, ContentObject):
 
 class Counter(StaticObject, ContentObject):
 
-    def __init__(self, unique_id, location):
+    def __init__(self, location):
+        unique_id = next(world_id_counter)
         super().__init__(unique_id, location, False)
         self.max_content = 1
 
@@ -68,7 +78,7 @@ class Counter(StaticObject, ContentObject):
         return 1,
 
     def feature_vector_representation(self):
-        return self.location
+        return list(self.location) + [1]
 
     @classmethod
     def state_length(cls):
@@ -76,7 +86,7 @@ class Counter(StaticObject, ContentObject):
 
     @classmethod
     def feature_vector_length(cls):
-        return 2
+        return 3
 
     def file_name(self) -> str:
         return "counter"
@@ -90,7 +100,8 @@ class Counter(StaticObject, ContentObject):
 
 class Deliversquare(StaticObject, ContentObject):
 
-    def __init__(self, unique_id, location):
+    def __init__(self, location):
+        unique_id = next(world_id_counter)
         super().__init__(unique_id, location, False)
 
     def accepts(self, dynamic_object) -> bool:
@@ -110,11 +121,11 @@ class Deliversquare(StaticObject, ContentObject):
         return 1,
 
     def feature_vector_representation(self):
-        return self.location
+        return list(self.location) + [1]
 
     @classmethod
     def feature_vector_length(cls):
-        return 2
+        return 3
 
     @classmethod
     def state_length(cls):
@@ -132,7 +143,8 @@ class Deliversquare(StaticObject, ContentObject):
 
 class Cutboard(StaticObject, ActionObject, ContentObject):
 
-    def __init__(self, unique_id, location):
+    def __init__(self, location):
+        unique_id = next(world_id_counter)
         super().__init__(unique_id, location, False)
 
         self.max_content = 1
@@ -168,8 +180,6 @@ class Cutboard(StaticObject, ActionObject, ContentObject):
         return True
 
     def add_content(self, content):
-        # self.content.append(content)
-
         if self.accepts(content):
             self.status = ActionObjectState.READY
             self.content.append(content)
@@ -183,7 +193,7 @@ class Cutboard(StaticObject, ActionObject, ContentObject):
         return 1,
 
     def feature_vector_representation(self):
-        return self.location
+        return list(self.location) + [1]
 
     @classmethod
     def state_length(cls):
@@ -191,7 +201,7 @@ class Cutboard(StaticObject, ActionObject, ContentObject):
 
     @classmethod
     def feature_vector_length(cls):
-        return 2
+        return 3
 
     def file_name(self) -> str:
         return "cutboard"
@@ -205,7 +215,8 @@ class Cutboard(StaticObject, ActionObject, ContentObject):
 
 class Blender(StaticObject, ProcessingObject, ContentObject, ToggleObject, ActionObject):
 
-    def __init__(self, unique_id, location):
+    def __init__(self, location):
+        unique_id = next(world_id_counter)
         super().__init__(unique_id, location, False)
         self.max_content = 1
 
@@ -258,11 +269,11 @@ class Blender(StaticObject, ProcessingObject, ContentObject, ToggleObject, Actio
         return 1
 
     def feature_vector_representation(self):
-        return self.location
+        return list(self.location) + [1]
 
     @classmethod
     def feature_vector_length(cls):
-        return 2
+        return 3
 
     def file_name(self) -> str:
         return "blender_on" if self.toggle else "blender3"
@@ -276,7 +287,8 @@ class Blender(StaticObject, ProcessingObject, ContentObject, ToggleObject, Actio
 
 class Plate(DynamicObject, ContentObject):
 
-    def __init__(self, unique_id, location):
+    def __init__(self, location):
+        unique_id = next(world_id_counter)
         super().__init__(unique_id, location)
         self.max_content = 64
 
@@ -302,7 +314,7 @@ class Plate(DynamicObject, ContentObject):
         return 1,
 
     def feature_vector_representation(self):
-        return self.location
+        return list(self.location) + [1]
 
     @classmethod
     def state_length(cls):
@@ -310,7 +322,7 @@ class Plate(DynamicObject, ContentObject):
 
     @classmethod
     def feature_vector_length(cls):
-        return 2
+        return 3
 
     def file_name(self) -> str:
         return "Plate"
@@ -324,7 +336,8 @@ class Plate(DynamicObject, ContentObject):
 
 class Onion(ChopFood):
 
-    def __init__(self, unique_id, location):
+    def __init__(self, location):
+        unique_id = next(world_id_counter)
         super().__init__(unique_id, location)
 
     def done(self):
@@ -334,7 +347,7 @@ class Onion(ChopFood):
         return 1, int(self.chop_state == ChopFoodStates.CHOPPED)
 
     def feature_vector_representation(self):
-        return list(self.location) + [int(not self.done()), int(self.done())]
+        return list(self.location) + [int(not self.done()), int(self.done())] + [1]
 
     @classmethod
     def state_length(cls):
@@ -342,7 +355,7 @@ class Onion(ChopFood):
 
     @classmethod
     def feature_vector_length(cls):
-        return 4
+        return 5
 
     def file_name(self) -> str:
         if self.done():
@@ -359,7 +372,8 @@ class Onion(ChopFood):
 
 class Tomato(ChopFood):
 
-    def __init__(self, unique_id, location):
+    def __init__(self, location):
+        unique_id = next(world_id_counter)
         super().__init__(unique_id, location)
 
     def done(self):
@@ -369,7 +383,7 @@ class Tomato(ChopFood):
         return 1, int(self.chop_state == ChopFoodStates.CHOPPED)
 
     def feature_vector_representation(self):
-        return list(self.location) + [int(not self.done()), int(self.done())]
+        return list(self.location) + [int(not self.done()), int(self.done())] + [1]
 
     @classmethod
     def state_length(cls):
@@ -377,7 +391,7 @@ class Tomato(ChopFood):
 
     @classmethod
     def feature_vector_length(cls):
-        return 4
+        return 5
 
     def file_name(self) -> str:
         if self.done():
@@ -394,7 +408,8 @@ class Tomato(ChopFood):
 
 class Lettuce(ChopFood):
 
-    def __init__(self, unique_id, location):
+    def __init__(self, location):
+        unique_id = next(world_id_counter)
         super().__init__(unique_id, location)
 
     def done(self):
@@ -404,7 +419,7 @@ class Lettuce(ChopFood):
         return 1, int(self.chop_state == ChopFoodStates.CHOPPED)
 
     def feature_vector_representation(self):
-        return list(self.location) + [int(not self.done()), int(self.done())]
+        return list(self.location) + [int(not self.done()), int(self.done())] + [1]
 
     @classmethod
     def state_length(cls):
@@ -412,7 +427,7 @@ class Lettuce(ChopFood):
 
     @classmethod
     def feature_vector_length(cls):
-        return 4
+        return 5
 
     def file_name(self) -> str:
         if self.done():
@@ -429,7 +444,8 @@ class Lettuce(ChopFood):
 
 class Carrot(BlenderFood, ChopFood):
 
-    def __init__(self, unique_id, location):
+    def __init__(self, location):
+        unique_id = next(world_id_counter)
         super().__init__(unique_id, location)
 
     def done(self):
@@ -440,7 +456,7 @@ class Carrot(BlenderFood, ChopFood):
 
     def feature_vector_representation(self):
         return list(self.location) + [int(not self.done()), int(self.chop_state == ChopFoodStates.CHOPPED),
-                                      int(self.blend_state == BlenderFoodStates.MASHED)]
+                                      int(self.blend_state == BlenderFoodStates.MASHED)] + [1]
 
     @classmethod
     def state_length(cls):
@@ -448,7 +464,7 @@ class Carrot(BlenderFood, ChopFood):
 
     @classmethod
     def feature_vector_length(cls):
-        return 5
+        return 6
 
     def file_name(self) -> str:
         if self.done():
@@ -468,7 +484,8 @@ class Carrot(BlenderFood, ChopFood):
 
 class Cucumber(ChopFood):
 
-    def __init__(self, unique_id, location):
+    def __init__(self, location):
+        unique_id = next(world_id_counter)
         super().__init__(unique_id, location)
 
     def done(self):
@@ -478,7 +495,7 @@ class Cucumber(ChopFood):
         return 1, int(self.chop_state == ChopFoodStates.CHOPPED)
 
     def feature_vector_representation(self):
-        return list(self.location) + [int(not self.done()), int(self.done())]
+        return list(self.location) + [int(not self.done()), int(self.done())] + [1]
 
     @classmethod
     def state_length(cls):
@@ -486,7 +503,7 @@ class Cucumber(ChopFood):
 
     @classmethod
     def feature_vector_length(cls):
-        return 4
+        return 5
 
     def file_name(self) -> str:
         return "default_dynamic"
@@ -500,7 +517,8 @@ class Cucumber(ChopFood):
 
 class Banana(BlenderFood, ChopFood):
 
-    def __init__(self, unique_id, location):
+    def __init__(self, location):
+        unique_id = next(world_id_counter)
         super().__init__(unique_id, location)
 
     def done(self):
@@ -511,7 +529,7 @@ class Banana(BlenderFood, ChopFood):
 
     def feature_vector_representation(self):
         return list(self.location) + [int(not self.done()), int(self.chop_state == ChopFoodStates.CHOPPED),
-                                      int(self.blend_state == BlenderFoodStates.MASHED)]
+                                      int(self.blend_state == BlenderFoodStates.MASHED)] + [1]
 
     @classmethod
     def state_length(cls):
@@ -519,7 +537,7 @@ class Banana(BlenderFood, ChopFood):
 
     @classmethod
     def feature_vector_length(cls):
-        return 5
+        return 6
 
     def file_name(self) -> str:
         if self.done():
@@ -539,7 +557,8 @@ class Banana(BlenderFood, ChopFood):
 
 class Apple(ChopFood):
 
-    def __init__(self, unique_id, location):
+    def __init__(self, location):
+        unique_id = next(world_id_counter)
         super().__init__(unique_id, location)
 
     def done(self):
@@ -549,7 +568,7 @@ class Apple(ChopFood):
         return 1, int(self.chop_state == ChopFoodStates.CHOPPED)
 
     def feature_vector_representation(self):
-        return list(self.location) + [int(not self.done()), int(self.chop_state == ChopFoodStates.CHOPPED)]
+        return list(self.location) + [int(not self.done()), int(self.chop_state == ChopFoodStates.CHOPPED)] + [1]
 
     @classmethod
     def state_length(cls):
@@ -557,7 +576,7 @@ class Apple(ChopFood):
 
     @classmethod
     def feature_vector_length(cls):
-        return 4
+        return 5
 
     def file_name(self) -> str:
         if self.chop_state == ChopFoodStates.CHOPPED:
@@ -574,7 +593,8 @@ class Apple(ChopFood):
 
 class Watermelon(ChopFood):
 
-    def __init__(self, unique_id, location):
+    def __init__(self, location):
+        unique_id = next(world_id_counter)
         super().__init__(unique_id, location)
 
     def done(self):
@@ -584,7 +604,7 @@ class Watermelon(ChopFood):
         return 1, int(self.chop_state == ChopFoodStates.CHOPPED)
 
     def feature_vector_representation(self):
-        return list(self.location) + [int(not self.done()), int(self.done())]
+        return list(self.location) + [int(not self.done()), int(self.done())] + [1]
 
     @classmethod
     def state_length(cls):
@@ -592,7 +612,7 @@ class Watermelon(ChopFood):
 
     @classmethod
     def feature_vector_length(cls):
-        return 4
+        return 5
 
     def file_name(self) -> str:
         if self.chop_state == ChopFoodStates.CHOPPED:
@@ -609,20 +629,20 @@ class Watermelon(ChopFood):
 
 class Bread(ChopFood):
 
-    def __init__(self, unique_id, location):
+    def __init__(self, location):
+        unique_id = next(world_id_counter)
         super().__init__(unique_id, location)
-        self.slices = 2
         self.chop_state = ChopFoodStates.FRESH
 
     def done(self):
         return self.chop_state == ChopFoodStates.CHOPPED
 
     def chop(self):
-        if self.slices > 1:
-            self.slices -= 1
-            if self.slices == 1:
-                self.chop_state = ChopFoodStates.CHOPPED
-            return [], [], True
+        if self.chop_state == ChopFoodStates.FRESH:
+            self.chop_state = ChopFoodStates.CHOPPED
+            new_chopped_bread = Bread(self.location)
+            new_chopped_bread.chop_state = ChopFoodStates.CHOPPED
+            return [new_chopped_bread], [], True
         else:
             return [], [], False
 
@@ -632,6 +652,13 @@ class Bread(ChopFood):
     @classmethod
     def state_length(cls):
         return 3
+
+    def feature_vector_representation(self):
+        return list(self.location) + [int(not self.done()), int(self.done())] + [1]
+
+    @classmethod
+    def feature_vector_length(cls):
+        return 5
 
     def file_name(self) -> str:
         if self.chop_state == ChopFoodStates.CHOPPED:
@@ -643,12 +670,13 @@ class Bread(ChopFood):
         return []
 
     def display_text(self) -> str:
-        return f"{self.unique_id} {'T' if self.free else 'F'}"
+        return f""
 
 
 class Agent(Object):
 
-    def __init__(self, unique_id, location, color, name):
+    def __init__(self, location, color, name):
+        unique_id = next(world_id_counter)
         super().__init__(unique_id, location, False, False)
         self.holding = None
         self.color = color
@@ -679,7 +707,7 @@ class Agent(Object):
 
     def feature_vector_representation(self):
         return list(self.location) + [int(self.orientation == 1), int(self.orientation == 2),
-                                      int(self.orientation == 3), int(self.orientation == 4)]
+                                      int(self.orientation == 3), int(self.orientation == 4)] + [1]
 
     @classmethod
     def state_length(cls):
@@ -687,7 +715,7 @@ class Agent(Object):
 
     @classmethod
     def feature_vector_length(cls):
-        return 6
+        return 7
 
     def file_name(self) -> str:
         pass
