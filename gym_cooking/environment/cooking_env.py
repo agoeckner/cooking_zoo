@@ -279,7 +279,7 @@ class CookingEnvironment(AECEnv):
                 rewards[idx] += (sum(goals_before) - sum(open_goals[idx])) * 5
             else:
                 rewards[idx] += bonus * 20
-                rewards[idx] -= malus * 20
+                rewards[idx] -= malus * 40
             rewards[idx] -= (5 / self.max_steps)
 
         for idx, agent in enumerate(self.world.agents):
