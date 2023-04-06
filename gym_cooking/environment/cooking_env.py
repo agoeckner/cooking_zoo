@@ -277,9 +277,10 @@ class CookingEnvironment(AECEnv):
             bonus = recipe.completed() and not completion_before
             if self.step_reward:
                 rewards[idx] += (sum(goals_before) - sum(open_goals[idx])) * 5
+                rewards[idx] -= malus * 40
             else:
                 rewards[idx] += bonus * 20
-                rewards[idx] -= malus * 20
+                rewards[idx] -= malus * 40
             rewards[idx] -= (5 / self.max_steps)
 
         for idx, agent in enumerate(self.world.agents):
