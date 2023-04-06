@@ -288,7 +288,7 @@ class CookingEnvironment(AECEnv):
                 rewards[idx] -= 0.01
 
         recipe_evaluations = [recipe.completed() for recipe in self.recipe_graphs]
-        infos = [{f"player_{idx}": evaluation} for idx, evaluation in enumerate(recipe_evaluations)]
+        infos = [{f"recipe_done": evaluation} for evaluation in recipe_evaluations]
         if self.group_finish:
             recipe_dones = all([recipe.completed() for recipe in self.recipe_graphs])
         else:

@@ -38,7 +38,7 @@ class CookingWorld:
 
     # AGENT_ACTIONS: 0: Noop, 1: Left, 2: right, 3: down, 4: up, 5: interact
 
-    def __init__(self, action_scheme_class=ActionScheme1, meta_file=""):
+    def __init__(self, action_scheme_class=ActionScheme1, meta_file="", recipes=None):
         self.agents = []
         self.width = 0
         self.height = 0
@@ -49,6 +49,7 @@ class CookingWorld:
         self.init_agents = []
         self.meta_object_information = self.load_meta_file(meta_file)
         self.loaded_object_counter = defaultdict(int)
+        self.recipes = recipes or []
 
     def add_object(self, obj):
         self.world_objects[type(obj).__name__].append(obj)
