@@ -115,7 +115,7 @@ class Deliversquare(StaticObject, ContentObject):
             self.content[-1].free = True
 
     def releases(self) -> bool:
-        return True
+        return False
 
     def numeric_state_representation(self):
         return 1,
