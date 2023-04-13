@@ -159,6 +159,9 @@ class CookingEnvironment(AECEnv):
         self.np_random, seed = seeding.np_random(seed)
 
     def reset(self, seed=None, return_info=False, options=None):
+
+        options = options or {"full_reset": True}
+
         # self.world = CookingWorld(self.action_scheme_class)
         self.t = 0
 
@@ -180,7 +183,8 @@ class CookingEnvironment(AECEnv):
         self.agent_selection = self._agent_selector.next()
         
         # Load world & distances.
-        self.world = CookingWorld(self.action_scheme_class, self.meta_file)
+        if options["full_reset"]:
+            self.world = CookingWorld(self.action_scheme_class, self.meta_file)
         self.world.load_level(level=self.level, num_agents=self.num_agents)
 
         for recipe in self.recipe_graphs:
