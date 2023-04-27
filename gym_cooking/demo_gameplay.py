@@ -7,16 +7,14 @@ max_steps = 400
 render = True
 obs_spaces = ["feature_vector"]
 action_scheme = "scheme3"
-ghost_agents = 0
 manual_control = False
-record = False
 meta_file = "open_room"
 level = "open_room_salad"
 recipes = ["TomatoLettuceSalad"]  # "CarrotBanana"
 
-env = cooking_env.parallel_env(level=level, meta_file=meta_file, num_agents=n_agents, record=record,
+env = cooking_env.parallel_env(level=level, meta_file=meta_file, num_agents=n_agents,
                                max_steps=max_steps, recipes=recipes, obs_spaces=obs_spaces,
-                               action_scheme=action_scheme, ghost_agents=ghost_agents, render=render)
+                               action_scheme=action_scheme, render=render)
 
 env.reset()
 env.render()

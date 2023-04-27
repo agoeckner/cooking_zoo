@@ -223,7 +223,7 @@ class CookingEnvironment(AECEnv):
         # Track internal environment info.
         self.t += 1
         # translated_actions = [action_translation_dict[actions[f"player_{idx}"]] for idx in range(len(actions))]
-        self.world.perform_agent_actions(self.world.agents, actions)
+        self.world.world_step(self.world.agents, actions)
 
         # Get an image observation
         # image_obs = self.game.get_image_obs()

@@ -123,6 +123,32 @@ class ProcessingObject(ABC):
         pass
 
 
+class LinkedObject(ABC):
+
+    def __init__(self):
+        super(LinkedObject, self).__init__()
+        self.linked_objects = []
+        self.linked_group_id = None
+
+    def link(self, other_object):
+        if other_object.linked_group_id == self.linked_group_id:
+            self.linked_objects.append(other_object)
+            other_object.linked_objects.append(self)
+            return True
+        return False
+
+    def unlink(self, other_object):
+        if other_object.linked_group_id == self.linked_group_id:
+            self.linked_objects.remove(other_object)
+            other_object.linked_objects.remove(self)
+            return True
+        return False
+
+    @abstractmethod
+    def process_linked_objects(self):
+        pass
+
+
 class ProgressingObject(ABC):
 
     def __init__(self):

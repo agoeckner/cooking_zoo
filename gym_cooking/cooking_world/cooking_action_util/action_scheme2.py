@@ -13,7 +13,6 @@ def perform_agent_actions(world, agents, actions):
     collision_actions = world.check_collisions(agents, cleaned_actions)
     for agent, action in zip(agents, collision_actions):
         world.perform_agent_action(agent, action)
-    world.progress_world()
 
 
 def perform_agent_action(world, agent: Agent, action):
