@@ -12,10 +12,10 @@ from pettingzoo import AECEnv
 from pettingzoo.utils import agent_selector
 from pettingzoo.utils import wrappers
 from pettingzoo.utils.conversions import parallel_wrapper_fn
-from gymnasium.utils import EzPickle, seeding
+from gymnasium.utils import seeding
 from gym_cooking.environment.game.graphic_pipeline import GraphicPipeline
-
 import gymnasium as gym
+
 
 CollisionRepr = namedtuple("CollisionRepr", "time agent_names agent_locations")
 COLORS = ['blue', 'magenta', 'yellow', 'green']
@@ -23,8 +23,8 @@ COLORS = ['blue', 'magenta', 'yellow', 'green']
 FPS = 20
 
 
-def env(level, meta_file, num_agents, record, max_steps, recipes, step_reward=True, obs_spaces=None, group_finish=False,
-        action_scheme="scheme1", ghost_agents=0, render=False):
+def env(level, meta_file, num_agents, max_steps, recipes, step_reward=True, obs_spaces=None, group_finish=False,
+        action_scheme="scheme1", render=False):
     """
     The env function wraps the environment in 3 wrappers by default. These
     wrappers contain logic that is common to many pettingzoo environments.
@@ -32,9 +32,8 @@ def env(level, meta_file, num_agents, record, max_steps, recipes, step_reward=Tr
     to provide sane error messages. You can find full documentation for these methods
     elsewhere in the developer documentation.
     """
-    env_init = CookingEnvironment(level, meta_file, num_agents, record, max_steps, recipes, step_reward, obs_spaces,
-                                  group_finish=group_finish, action_scheme=action_scheme, ghost_agents=ghost_agents,
-                                  render=render)
+    env_init = CookingEnvironment(level, meta_file, num_agents, max_steps, recipes, step_reward, obs_spaces,
+                                  group_finish=group_finish, action_scheme=action_scheme, render=render)
     env_init = wrappers.CaptureStdoutWrapper(env_init)
     env_init = wrappers.AssertOutOfBoundsWrapper(env_init)
     env_init = wrappers.OrderEnforcingWrapper(env_init)
@@ -57,8 +56,8 @@ class CookingEnvironment(AECEnv):
 
     action_scheme_map = {"scheme1": ActionScheme1, "scheme2": ActionScheme2, "scheme3": ActionScheme3}
 
-    def __init__(self, level, meta_file, num_agents, record, max_steps, recipes, step_reward=True, obs_spaces=None,
-                 group_finish=False, allowed_objects=None, action_scheme="scheme1", ghost_agents=0, render=False):
+    def __init__(self, level, meta_file, num_agents, max_steps, recipes, step_reward=True, obs_spaces=None,
+                 group_finish=False, allowed_objects=None, action_scheme="scheme1", render=False):
         super().__init__()
 
         obs_spaces = obs_spaces or ["numeric_main"]
@@ -74,21 +73,19 @@ class CookingEnvironment(AECEnv):
         self.agents = self.possible_agents[:]
 
         self.level = level
-        self.record = record
         self.max_steps = max_steps
         self.t = 0
         self.filename = ""
         self.set_filename()
         self.meta_file = meta_file
         self.world = CookingWorld(self.action_scheme_class, meta_file)
-        assert self.num_agents + ghost_agents <= self.world.meta_object_information["Agent"], \
+        assert self.num_agents <= self.world.meta_object_information["Agent"], \
             "Too many agents for this level"
         self.recipes = recipes
         self.graphic_pipeline = None
         self.game = None
         self.render_flag = render
         self.recipe_graphs = [RECIPES[recipe]() for recipe in recipes]
-        self.ghost_agents = ghost_agents
 
         self.termination_info = ""
         self.world.load_level(level=self.level, num_agents=num_agents)
@@ -159,24 +156,12 @@ class CookingEnvironment(AECEnv):
         self.np_random, seed = seeding.np_random(seed)
 
     def reset(self, seed=None, return_info=False, options=None):
-
         options = options or {"full_reset": True}
-
         # self.world = CookingWorld(self.action_scheme_class)
         self.t = 0
 
         # For tracking data during an episode.
         self.termination_info = ""
-
-        # if self.record:
-        #     self.game = GameImage(
-        #         filename=self.filename,
-        #         world=self.world,
-        #         record=self.record)
-        #     self.game.on_init()
-        #     self.game.save_image_obs(self.t)
-        # else:
-        #     self.game = None
 
         self.agents = self.possible_agents[:]
         self._agent_selector.reinit(self.agents)
@@ -191,7 +176,6 @@ class CookingEnvironment(AECEnv):
             recipe.update_recipe_state(self.world)
 
         # Get an image observation
-        # image_obs = self.game.get_image_obs()
         self.recipe_mapping = dict(zip(self.possible_agents, self.recipe_graphs))
         self.agent_name_mapping = dict(zip(self.possible_agents, list(range(len(self.possible_agents)))))
         self.world_agent_mapping = dict(zip(self.possible_agents, self.world.agents))
@@ -209,7 +193,6 @@ class CookingEnvironment(AECEnv):
         return
 
     def step(self, action):
-
         if self.terminations[self.agent_selection] or self.truncations[self.agent_selection]:
             self._was_dead_step(action)
             return
@@ -228,9 +211,7 @@ class CookingEnvironment(AECEnv):
         self.t += 1
         # translated_actions = [action_translation_dict[actions[f"player_{idx}"]] for idx in range(len(actions))]
         self.world.perform_agent_actions(self.world.agents, actions)
-
         # Get an image observation
-        # image_obs = self.game.get_image_obs()
         self.current_tensor_observation = self.get_tensor_representation()
 
         info = {"t": self.t, "termination_info": self.termination_info}
@@ -265,10 +246,9 @@ class CookingEnvironment(AECEnv):
         dones = [False] * len(self.recipes)
         rewards = [0] * len(self.recipes)
         open_goals = [[0]] * len(self.recipes)
-        infos = [{}] * len(self.recipes)
         # Done if the episode maxes out
         if self.t >= self.max_steps and self.max_steps:
-            self.termination_info = f"Terminating because passed {self.max_steps} timesteps"
+            self.termination_info = f"Terminating because {self.max_steps} timesteps passed"
             # change every entry in dones to true
             dones = [True] * len(self.recipes)
 
@@ -320,37 +300,8 @@ class CookingEnvironment(AECEnv):
                 feature_vector.extend(features)
                 current_num += 1
             feature_vector.extend([0] * (num - current_num) * cls.feature_vector_length())
-
         new_vector = np.array(feature_vector)
-        # old_vector = self.get_feature_vector_old(agent)
-        # dif = new_vector - old_vector
-        # print(dif)
         return new_vector
-
-    def get_feature_vector_old(self, agent):
-        feature_vector = []
-        objects = defaultdict(list)
-        objects.update(self.world.world_objects)
-        objects["Agent"] = self.world.agents
-        x, y = self.world_agent_mapping[agent].location
-        for name, num in self.world.meta_object_information.items():
-            cls = StringToClass[name]
-            for obj in objects[ClassToString[cls]]:
-                features = list(obj.feature_vector_representation())
-                if features and obj is not self.world_agent_mapping[agent]:
-                    features[0] = (features[0] - x) / self.world.width
-                    features[1] = (features[1] - y) / self.world.height
-                if obj is self.world_agent_mapping[agent]:
-                    features[0] = features[0] / self.world.width
-                    features[1] = features[1] / self.world.height
-                feature_vector.extend(features)
-        for idx in range(self.ghost_agents):
-            features = self.world_agent_mapping[agent].feature_vector_representation()
-            features[0] = 0
-            features[1] = 0
-            feature_vector.extend(features)
-
-        return np.array(feature_vector)
 
     def get_tensor_representation(self):
         tensor = np.zeros((self.world.width, self.world.height, self.graph_representation_length))
