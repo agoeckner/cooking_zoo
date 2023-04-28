@@ -182,4 +182,3 @@ class Game:
 
     def save_image_obs(self, t):
         self.graphics_pipeline.save_image_obs(t)
-

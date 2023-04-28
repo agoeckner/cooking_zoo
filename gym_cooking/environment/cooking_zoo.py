@@ -113,8 +113,9 @@ class CookingEnvironment(AECEnv):
         self.dones = dict(zip(self.agents, [False for _ in self.agents]))
         self.infos = dict(zip(self.agents, [{} for _ in self.agents]))
         self.accumulated_actions = []
-        self.current_tensor_observation = np.zeros((self.world.width, self.world.height,
-                                                    self.graph_representation_length))
+        self.current_tensor_observation = dict(zip(self.agents, [np.zeros((self.world.width, self.world.height,
+                                                                           self.graph_representation_length))
+                                                                 for _ in self.agents]))
 
     def set_filename(self):
         self.filename = f"{self.level}_agents{self.num_agents}"
@@ -157,7 +158,9 @@ class CookingEnvironment(AECEnv):
         self.world_agent_mapping = dict(zip(self.possible_agents, self.world.agents))
         self.world_agent_to_env_agent_mapping = dict(zip(self.world.agents, self.possible_agents))
 
-        self.current_tensor_observation = self.get_tensor_representation()
+        self.current_tensor_observation = dict(zip(self.agents, [np.zeros((self.world.width, self.world.height,
+                                                                           self.graph_representation_length))
+                                                                 for _ in self.agents]))
         self.rewards = dict(zip(self.agents, [0 for _ in self.agents]))
         self._cumulative_rewards = dict(zip(self.agents, [0 for _ in self.agents]))
         self.dones = dict(zip(self.agents, [False for _ in self.agents]))
@@ -193,7 +196,8 @@ class CookingEnvironment(AECEnv):
 
         # Get an image observation
         # image_obs = self.game.get_image_obs()
-        self.current_tensor_observation = self.get_tensor_representation()
+        for agent in self.agents:
+            self.current_tensor_observation[agent] = self.get_tensor_representation(agent)
 
         info = {"t": self.t, "termination_info": self.termination_info}
 
@@ -206,7 +210,7 @@ class CookingEnvironment(AECEnv):
     def observe(self, agent):
         observation = []
         if "numeric" in self.obs_spaces:
-            num_observation = {'symbolic_observation': self.current_tensor_observation,
+            num_observation = {'numeric_observation': self.current_tensor_observation[agent],
                                'agent_location': np.asarray(self.world_agent_mapping[agent].location, np.int32),
                                'goal_vector': self.recipe_mapping[agent].goals_completed(NUM_GOALS)}
             observation.append(num_observation)
