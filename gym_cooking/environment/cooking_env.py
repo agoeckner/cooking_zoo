@@ -35,7 +35,6 @@ def env(level, meta_file, num_agents, max_steps, recipes, step_reward=True, obs_
     env_init = CookingEnvironment(level, meta_file, num_agents, max_steps, recipes, step_reward, obs_spaces,
                                   group_finish=group_finish, action_scheme=action_scheme, render=render)
     env_init = wrappers.CaptureStdoutWrapper(env_init)
-    env_init = wrappers.AssertOutOfBoundsWrapper(env_init)
     env_init = wrappers.OrderEnforcingWrapper(env_init)
     return env_init
 

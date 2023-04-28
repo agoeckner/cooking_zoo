@@ -8,8 +8,8 @@ render = True
 obs_spaces = ["feature_vector"]
 action_scheme = "scheme3"
 manual_control = False
-meta_file = "open_room"
-level = "open_room_salad"
+meta_file = "example"
+level = "separated_room_switch_test"
 recipes = ["TomatoLettuceSalad"]  # "CarrotBanana"
 
 env = cooking_env.parallel_env(level=level, meta_file=meta_file, num_agents=n_agents,

@@ -9,5 +9,7 @@
   {"Lettuce": 3},
   {"Carrot": 3},
   {"Banana": 3},
-  {"Agent": 2}
+  {"Agent": 2},
+  {"Block": 2},
+  {"Switch": 2}
 ]

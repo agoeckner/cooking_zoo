@@ -1,6 +1,8 @@
 from abc import abstractmethod, ABC
 from gym_cooking.cooking_world.constants import *
 from typing import List, Tuple
+import inspect
+import sys
 
 
 class Object(ABC):
@@ -133,7 +135,6 @@ class LinkedObject(ABC):
     def link(self, other_object):
         if other_object.linked_group_id == self.linked_group_id:
             self.linked_objects.append(other_object)
-            other_object.linked_objects.append(self)
             return True
         return False
 
@@ -317,7 +318,6 @@ class PotFood(DynamicObject, Food, ABC):
         return False
 
 
-ABSTRACT_GAME_CLASSES = (ActionObject, ProcessingObject, ProgressingObject, ContentObject, Food, ChopFood,
-                         DynamicObject, StaticObject, BlenderFood, ToasterFood)
+ABSTRACT_GAME_CLASSES = [m[1] for m in inspect.getmembers(sys.modules[__name__], inspect.isclass)
+                         if m[1].__module__ == __name__]
 
-STATEFUL_GAME_CLASSES = (ChopFood, BlenderFood, ToasterFood)

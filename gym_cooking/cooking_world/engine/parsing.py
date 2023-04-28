@@ -37,6 +37,7 @@ def parse_static_objects(world, level_object):
                     raise ValueError(f"Position {x} {y} of object {name} is out of bounds set by the level layout!")
                 static_objects_loc = world.get_objects_at((x, y), StaticObject)
                 counter = [obj for obj in static_objects_loc if isinstance(obj, Counter)]
+                floor = [obj for obj in static_objects_loc if isinstance(obj, Floor)]
                 if counter:
                     if len(counter) != 1:
                         raise ValueError("Too many counter in one place detected during initialization")
@@ -45,6 +46,26 @@ def parse_static_objects(world, level_object):
                     world.loaded_object_counter[name] += 1
                     world.delete_object(counter[0])
                     obj = StringToClass[name](location=(x, y))
+                    try:
+                        for key in static_object[name]["ATTRIBUTES"].keys():
+                            setattr(obj, key, static_object[name][key])
+                    except KeyError:
+                        pass
+                    world.add_object(obj)
+                    break
+                elif floor:
+                    if len(floor) != 1:
+                        raise ValueError("Too many floor tiles in one place detected during initialization")
+                    if world.meta_object_information[name] <= world.loaded_object_counter[name]:
+                        raise ValueError(f"Too many {name} objects loaded")
+                    world.loaded_object_counter[name] += 1
+                    world.delete_object(floor[0])
+                    obj = StringToClass[name](location=(x, y))
+                    try:
+                        for key in static_object[name]["ATTRIBUTES"].keys():
+                            setattr(obj, key, static_object[name][key])
+                    except KeyError:
+                        pass
                     world.add_object(obj)
                     break
                 else:

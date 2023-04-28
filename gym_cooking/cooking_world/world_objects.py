@@ -141,6 +141,104 @@ class Deliversquare(StaticObject, ContentObject):
         return ""
 
 
+class Switch(StaticObject, ContentObject, LinkedObject):
+
+    def __init__(self, location):
+        unique_id = next(world_id_counter)
+        super().__init__(unique_id, location, True)
+        self.max_content = 1
+        self.switch_active = False
+        self.button_pressed = False
+
+    def accepts(self, dynamic_object) -> bool:
+        return False
+
+    def releases(self) -> bool:
+        return True
+
+    def add_content(self, content):
+        assert isinstance(content, Agent), f"Floors can only hold Agents as content! not {content}"
+        self.content.append(content)
+        self.switch_active = not self.switch_active
+        self.button_pressed = True
+
+    def process_linked_objects(self):
+        if self.button_pressed:
+            for obj in self.linked_objects:
+                obj.switch_state()
+        self.button_pressed = False
+
+    def numeric_state_representation(self):
+        return 1,
+
+    def feature_vector_representation(self):
+        return list(self.location) + [self.switch_active, 1]
+
+    @classmethod
+    def state_length(cls):
+        return 1
+
+    @classmethod
+    def feature_vector_length(cls):
+        return 4
+
+    def file_name(self) -> str:
+        return "SwitchOn" if self.switch_active else "SwitchOff"
+
+    def icons(self) -> List[str]:
+        return []
+
+    def display_text(self) -> str:
+        return ""
+
+
+class Block(StaticObject, ContentObject, LinkedObject):
+
+    def __init__(self, location):
+        unique_id = next(world_id_counter)
+        super().__init__(unique_id, location, False)
+        self.max_content = 1
+
+    def releases(self) -> bool:
+        return True
+
+    def process_linked_objects(self):
+        pass
+
+    def accepts(self, dynamic_objects) -> bool:
+        return False
+
+    def add_content(self, content):
+        assert isinstance(content, Agent), f"Blocks can only hold Agents as content! not {content}"
+        self.content.append(content)
+
+    def switch_state(self):
+        self.walkable = not self.walkable
+
+    def numeric_state_representation(self):
+        return 1,
+
+    def feature_vector_representation(self):
+        return list(self.location) + [int(self.walkable), 1]
+
+    @classmethod
+    def state_length(cls):
+        return 1
+
+    @classmethod
+    def feature_vector_length(cls):
+        return 4
+
+    def file_name(self) -> str:
+        return "Floor" if self.walkable else "BlockActive"
+
+    def icons(self) -> List[str]:
+        return []
+
+    def display_text(self) -> str:
+        return ""
+
+
 class Cutboard(StaticObject, ActionObject, ContentObject):
 
     def __init__(self, location):

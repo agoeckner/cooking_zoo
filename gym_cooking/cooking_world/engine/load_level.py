@@ -1,7 +1,7 @@
 from gym_cooking.cooking_world.engine import parsing
 from pathlib import Path
 from collections import defaultdict
-from gym_cooking.cooking_world.world_objects import reset_world_counter
+from gym_cooking.cooking_world.world_objects import reset_world_counter, LinkedObject
 
 import os.path
 import json
@@ -13,7 +13,7 @@ def load_new_style_level(world, level_name, num_agents):
     dir_name = os.path.dirname(my_path)
     reset_world_counter()
     path = Path(dir_name)
-    parent = path.parent / f"utils/new_style_level/{level_name}.json"
+    parent = path.parent.parent / f"utils/new_style_level/{level_name}.json"
     with open(parent) as json_file:
         level_object = json.load(json_file)
         json_file.close()
@@ -23,11 +23,21 @@ def load_new_style_level(world, level_name, num_agents):
     parsing.parse_agents(world, level_object, num_agents)
 
 
+def cross_link(world):
+    linked_objects = world.abstract_index[LinkedObject]
+    for obj in linked_objects:
+        for obj2 in linked_objects:
+            if obj == obj2:
+                continue
+            if obj.linked_group_id == obj2.linked_group_id:
+                obj.link(obj2)
+
+
 def load_meta_file(meta_file):
     my_path = os.path.realpath(__file__)
     dir_name = os.path.dirname(my_path)
     path = Path(dir_name)
-    parent = path.parent / f"utils/meta_files/{meta_file}.json"
+    parent = path.parent.parent / f"utils/meta_files/{meta_file}.json"
     with open(parent) as json_file:
         meta_object = json.load(json_file)
         json_file.close()
@@ -44,9 +54,10 @@ def load_level(world, level, num_agents):
         world.world_objects.update(copy.deepcopy(world.init_world))
         world.agents = copy.deepcopy(world.init_agents)
     else:
-        world.load_new_style_level(level, num_agents)
+        load_new_style_level(world, level, num_agents)
         world.abstract_index = defaultdict(list)
         world.init_world = defaultdict(list)
         world.init_world.update(copy.deepcopy(world.world_objects))
         world.init_agents = copy.deepcopy(world.agents)
     world.index_objects()
+    cross_link(world)
