@@ -213,7 +213,8 @@ class CookingEnvironment(AECEnv):
             self.accumulated_step(self.accumulated_actions)
             self.accumulated_actions = []
         self.agent_selection = self._agent_selector.next()
-        self._cumulative_rewards[agent] = 0
+        # self._cumulative_rewards[agent] = 0
+        self._cumulative_rewards[agent] += self.rewards[agent]
 
     def accumulated_step(self, actions):
         # Track internal environment info.
@@ -256,6 +257,8 @@ class CookingEnvironment(AECEnv):
             self.termination_info = f"Terminating because {self.max_steps} timesteps passed"
             # change every entry in dones to true
             dones = [True] * len(self.recipes)
+
+
 
         for idx, recipe in enumerate(self.recipe_graphs):
             goals_before = recipe.goals_completed(self.num_goals)
